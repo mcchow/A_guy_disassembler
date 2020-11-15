@@ -22,6 +22,14 @@ DeAddr  MOVE.L D1,D3
         BEQ REGISTERA
         CMP #2,D4
         BEQ DIRADDR
+        CMP #3,D4
+        BEQ DIRADDRP
+        CMP #4,D4
+        BEQ DIRADDRN
+        CMP #7,D4
+        BEQ TEMPADDR
+        BRA EndDeAddr ;JUST INCASE
+        
 *SECTION FOR D# AND A#
 REGISTERD    LEA     D,A1
         MOVE.B  #14,D0
@@ -32,25 +40,86 @@ REGISTERA  LEA     A,A1
         MOVE.B  #14,D0
         TRAP    #15
         JSR PRINTDIGI
-        BRA EndDeAddr         
+        BRA EndDeAddr
+         
+         
 *PRINT REGISTER#
 PRINTDIGI   AND #7,D3
     MOVE.W  D3,D1
     MOVE.B  #3,D0
     TRAP    #15
     RTS
+    
+    
 *DIRECT ADDRESS (A#)
 DIRADDR LEA     ABra,A1
         MOVE.B  #14,D0
         TRAP    #15
-    AND #7,D3
-    MOVE.W  D3,D1
-    MOVE.B  #3,D0
+    JSR PRINTDIGI
+    LEA     CloBra,A1
+    MOVE.B  #14,D0
     TRAP    #15
+    BRA EndDeAddr
+    
+*DIRECT ADDRESS (A#)+
+DIRADDRP LEA     ABra,A1
+        MOVE.B  #14,D0
+        TRAP    #15
+    JSR PRINTDIGI
+    LEA     CloBra,A1
+    MOVE.B  #14,D0
+    TRAP    #15
+    LEA     PlusSign,A1
+    MOVE.B  #14,D0
+    TRAP    #15
+    BRA EndDeAddr
+    
+*DIRECT ADDRESS -(A#)
+DIRADDRN LEA     NegSign,A1
+        MOVE.B  #14,D0
+        TRAP    #15
+    LEA     ABra,A1
+    MOVE.B  #14,D0
+    TRAP    #15
+    JSR PRINTDIGI
+    LEA     CloBra,A1
+    MOVE.B  #14,D0
+    TRAP    #15
+    BRA EndDeAddr
     
     
+*TEMPADDR # OR L OR W
+TEMPADDR    AND #7,D3
+    CMP #0,D3
+    BRA WORDADDR
+    CMP #1,D3
+    BRA LONGADDR
+    CMP #4,D3
+    BRA IMMEADDR
+    BRA EndDeAddr
     
-    EndDeAddr   MOVE D1,D0 
+WORDADDR MOVE.B  #4,D0 ; assuming getting data from next line
+    TRAP    #15
+    JSR PRINTDIGI
+    BRA EndDeAddr
+    
+LONGADDR    MOVE.B  #4,D0 ; assuming getting data from next line
+    TRAP    #15
+    JSR PRINTDIGI
+    BRA EndDeAddr
+    
+IMMEADDR    LEA     NumSign,A1
+        MOVE.B  #14,D0
+        TRAP    #15
+    MOVE.B  #4,D0 ; assuming getting data from next line
+    TRAP    #15
+    JSR PRINTDIGI
+    BRA EndDeAddr
+
+
+
+
+EndDeAddr   MOVE D1,D0 
     SIMHALT             ; halt simulator
    
 
@@ -59,6 +128,8 @@ CR      EQU     $0D
 LF      EQU     $0A
 D DC.B    'D',0
 A DC.B    'A',0
+Bra DC.B   '(',0
+NumSign DC.B '#',0
 ABra DC.B   '(A',0
 CloBra DC.B ')',0
 PlusSign DC.B '+',0
