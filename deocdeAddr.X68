@@ -2,7 +2,9 @@
 * Title      :
 * Written by :
 * Date       :
-* Description:
+* Description: Move the code that you are planing to decode to A1
+* input: A1, 6bit digit
+* output: print the digit
 *-----------------------------------------------------------
     ORG    $1000
 START:                  ; first instruction of program
@@ -139,6 +141,7 @@ NEXTLINE DC.B CR,LF,0
 
     END    START        ; last line of source
     
+
 *~Font name~Courier New~
 *~Font size~10~
 *~Tab type~1~
