@@ -99,18 +99,18 @@ process_letter
 
 
 process_input
-                clr.l     d7              * d7
-                move.b    #$4,d7          * d7
+                clr.l     d7              * 
+                move.b    #$4,d7          * 4 bits in a byte
 
 process_input_loop
                 cmp.b    #$0,d7 * d7
                 beq      return_from_subroutine
                 
-                move.b   (a2)+,d4         *
-                lsl.l    #4,d4            *
-                add.b    (a2)+,d4         *
-                move.b   d4,(a4)+         *
-                sub.l    #$1,d7           * d7
+                move.b   (a2)+,d4         * move value at A2 to D4
+                lsl.l    #4,d4            * shift left by 4
+                add.b    (a2)+,d4         * add value to data register
+                move.b   d4,(a4)+         * copy back to address register
+                sub.l    #$1,d7           * subtract one from length left to process
                 bra      process_input_loop
 
 return_from_subroutine
