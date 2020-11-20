@@ -156,11 +156,293 @@ ADD_BRANCH_SUBROUTINE
     LSR.W   #6,D6
     
 *----CHECK FOR ADDA---
-    CMP.B   #$1,D6
+    CMP.B   #$3,D6
     BEQ     PROCESS_ADDA    ;ADDA
+    
+    CMP.B   #$7,D6
+    BEQ     PROCESS_ADDA
     
 *----ALL OTHER ADD---
     BRA     PROCESS_ADD     ;ADD
+    
+*--------------------------------------------
+*PROCESS PRINT FOR ADD
+*D7=ORIGINAL
+PROCESS_ADD
+*----I/O ADD----
+    LEA     MESSAGE_ADD,A1
+    MOVE.B  #14,D0
+    TRAP    #15
+    
+*----SETUP FOR SIZE COMPARE----
+    MOVE.W  D7,D6
+    LSR.W   #$6,D6
+    
+*----COMPARE FOR OPMODE----
+    CMP.B   #$0,D6
+    BEQ     PROCESS_ADD_BYTEa
+    
+    CMP.B   #$1,D6
+    BEQ     PROCESS_ADD_WORDa
+    
+    CMP.B   #$2,D6
+    BEQ     PROCESS_ADD_LONGa
+    
+    CMP.B   #$4,D6
+    BEQ     PROCESS_ADD_BYTEb
+    
+    CMP.B   #$5,D6
+    BEQ     PROCESS_ADD_WORDb
+    
+    CMP.B   #$6,D6
+    BEQ     PROCESS_ADD_LONGb
+    
+*--------------------------------------------
+*PROCESS ADD FORMAT 'ADD.B <EA>,Dn
+*D7=ORIGINAL
+PROCESS_ADD_BYTEa
+*----SIZE OUTPUT----
+    LEA     MESSAGE_BYTE,A1
+    MOVE.B  #14,D0
+    TRAP    #15
+    
+*----EA OUTPUT----
+    MOVE.W  D7,D6
+    AND.W   #$001F,D6
+    MOVEM.W D7/A5/A6,-(SP)
+    BRA     DeAddr              ;PRINT EA
+    
+*----PRINT COMMA----
+    LEA MESSAGE_COMMA,A1
+    MOVE.B  #14,D0
+    TRAP    #15
+    
+*----DIRECTORY OUTPUT----
+    MOVEM.W +(SP),D7,A5,A6
+    LEA     MESSAGE_DIRECTORY,A1
+    MOVE.B  #14,D0
+    TRAP    #15
+    
+*----DIRECTORY NUMBER----
+    MOVE.W  D7,D6
+    AND.W   #$0E00,D6
+    ROL.W   #$7,D6
+    MOVE.B  #3,D0
+    MOVE.B  D6,D1
+    TRAP    #15
+    
+*----NEW LINE----
+    LEA     newline,A1
+    MOVE.B  #14,D0
+    TRAP    #15
+    
+    BRA     PRIMELOOP
+  
+*--------------------------------------------
+*PROCESS ADD FORMAT 'ADD.W <EA>,Dn
+*D7=ORIGINAL
+PROCESS_ADD_WORDa
+*----SIZE OUTPUT----
+    LEA     MESSAGE_WORD,A1
+    MOVE.B  #14,D0
+    TRAP    #15
+    
+*----EA OUTPUT----
+    MOVE.W  D7,D6
+    AND.W   #$001F,D6
+    MOVEM.W D7/A5/A6,-(SP)
+    BRA     DeAddr              ;PRINT EA
+    
+*----PRINT COMMA----
+    LEA MESSAGE_COMMA,A1
+    MOVE.B  #14,D0
+    TRAP    #15
+    
+*----DIRECTORY OUTPUT----
+    MOVEM.W +(SP),D7,A5,A6
+    LEA     MESSAGE_DIRECTORY,A1
+    MOVE.B  #14,D0
+    TRAP    #15
+    
+*----DIRECTORY NUMBER----
+    MOVE.W  D7,D6
+    AND.W   #$0E00,D6
+    ROL.W   #$7,D6
+    MOVE.B  #3,D0
+    MOVE.B  D6,D1
+    TRAP    #15
+    
+*----NEW LINE----
+    LEA     newline,A1
+    MOVE.B  #14,D0
+    TRAP    #15  
+    
+    BRA     PRIMELOOP
+
+*--------------------------------------------
+*PROCESS ADD FORMAT 'ADD.L <EA>,Dn
+*D7=ORIGINAL
+PROCESS_ADD_LONGa
+*----SIZE OUTPUT----
+    LEA     MESSAGE_LONG,A1
+    MOVE.B  #14,D0
+    TRAP    #15
+    
+*----EA OUTPUT----
+    MOVE.W  D7,D6
+    AND.W   #$001F,D6
+    MOVEM.W D7/A5/A6,-(SP)
+    BRA     DeAddr              ;PRINT EA
+ 
+*----PRINT COMMA----
+    LEA MESSAGE_COMMA,A1
+    MOVE.B  #14,D0
+    TRAP    #15
+   
+*----DIRECTORY OUTPUT----
+    MOVEM.W +(SP),D7,A5,A6
+    LEA     MESSAGE_DIRECTORY,A1
+    MOVE.B  #14,D0
+    TRAP    #15
+    
+*----DIRECTORY NUMBER----
+    MOVE.W  D7,D6
+    AND.W   #$0E00,D6
+    ROL.W   #$7,D6
+    MOVE.B  #3,D0
+    MOVE.B  D6,D1
+    TRAP    #15
+    
+*----NEW LINE----
+    LEA     newline,A1
+    MOVE.B  #14,D0
+    TRAP    #15
+    
+    BRA     PRIMELOOP
+    
+*--------------------------------------------
+*PROCESS ADD FORMAT 'ADD.B Dn,<EA>
+*D7=ORIGINAL
+PROCESS_ADD_BYTEb
+*----SIZE OUTPUT----
+    LEA     MESSAGE_BYTE,A1
+    MOVE.B  #14,D0
+    TRAP    #15
+    
+*----DIRECTORY OUTPUT----
+    MOVEM.W +(SP),D7,A5,A6
+    LEA     MESSAGE_DIRECTORY,A1
+    MOVE.B  #14,D0
+    TRAP    #15
+    
+*----DIRECTORY NUMBER----
+    MOVE.W  D7,D6
+    AND.W   #$0E00,D6
+    ROL.W   #$7,D6
+    MOVE.B  #3,D0
+    MOVE.B  D6,D1
+    TRAP    #15
+   
+*----PRINT COMMA----
+    LEA MESSAGE_COMMA,A1
+    MOVE.B  #14,D0
+    TRAP    #15
+ 
+*----EA OUTPUT----
+    MOVE.W  D7,D6
+    AND.W   #$001F,D6
+    MOVEM.W D7/A5/A6,-(SP)
+    BRA     DeAddr              ;PRINT EA
+    
+*----NEW LINE----
+    LEA     newline,A1
+    MOVE.B  #14,D0
+    TRAP    #15
+    
+    BRA     PRIMELOOP
+   
+*--------------------------------------------
+*PROCESS ADD FORMAT 'ADD.W Dn,<EA>
+*D7=ORIGINAL
+PROCESS_ADD_WORDb
+*----SIZE OUTPUT----
+    LEA     MESSAGE_WORD,A1
+    MOVE.B  #14,D0
+    TRAP    #15
+    
+*----DIRECTORY OUTPUT----
+    MOVEM.W +(SP),D7,A5,A6
+    LEA     MESSAGE_DIRECTORY,A1
+    MOVE.B  #14,D0
+    TRAP    #15
+    
+*----DIRECTORY NUMBER----
+    MOVE.W  D7,D6
+    AND.W   #$0E00,D6
+    ROL.W   #$7,D6
+    MOVE.B  #3,D0
+    MOVE.B  D6,D1
+    TRAP    #15
+   
+*----PRINT COMMA----
+    LEA MESSAGE_COMMA,A1
+    MOVE.B  #14,D0
+    TRAP    #15
+ 
+*----EA OUTPUT----
+    MOVE.W  D7,D6
+    AND.W   #$001F,D6
+    MOVEM.W D7/A5/A6,-(SP)
+    BRA     DeAddr              ;PRINT EA
+    
+*----NEW LINE----
+    LEA     newline,A1
+    MOVE.B  #14,D0
+    TRAP    #15
+
+    BRA     PRIMELOOP
+ 
+ *--------------------------------------------
+*PROCESS ADD FORMAT 'ADD.L Dn,<EA>
+*D7=ORIGINAL
+PROCESS_ADD_LONGb
+*----SIZE OUTPUT----
+    LEA     MESSAGE_LONG,A1
+    MOVE.B  #14,D0
+    TRAP    #15
+    
+*----DIRECTORY OUTPUT----
+    MOVEM.W +(SP),D7,A5,A6
+    LEA     MESSAGE_DIRECTORY,A1
+    MOVE.B  #14,D0
+    TRAP    #15
+    
+*----DIRECTORY NUMBER----
+    MOVE.W  D7,D6
+    AND.W   #$0E00,D6
+    ROL.W   #$7,D6
+    MOVE.B  #3,D0
+    MOVE.B  D6,D1
+    TRAP    #15
+   
+*----PRINT COMMA----
+    LEA MESSAGE_COMMA,A1
+    MOVE.B  #14,D0
+    TRAP    #15
+ 
+*----EA OUTPUT----
+    MOVE.W  D7,D6
+    AND.W   #$001F,D6
+    MOVEM.W D7/A5/A6,-(SP)
+    BRA     DeAddr              ;PRINT EA
+    
+*----NEW LINE----
+    LEA     newline,A1
+    MOVE.B  #14,D0
+    TRAP    #15
+    
+    BRA     PRIMELOOP
+
 *--------------------------------------------
 *PROCESS BCC'S SUBROUTINE FOR CONDITION
 *D7=ORIGINAL   
@@ -375,7 +657,7 @@ DISPLACEMENT_BCC
 PRINT_16BIT
     *I/O CODE
     *DISPLACEMENT = NEXT WORD FROM A5
-    JMP     PRIMELOOP
+    BRA     PRIMELOOP
     
 *--------------------------------------------
 *PRINT 32 BIT DISPLACEMENT
@@ -397,7 +679,17 @@ PRINT_8BIT
 
     SIMHALT             ; halt simulator
 
-* Put variables and constants here
+CR              EQU     $0D
+LF              EQU     $0A
+
+MESSAGE_ADD DC.B    'ADD',0
+MESSAGE_BYTE    DC.B    '.B    ',0
+MESSAGE_WORD    DC.B    '.W    ',0
+MESSGAE_LONG    DC.B    '.L    ',0
+MESSAGE_DIRECTORY   DC.B    'D'
+MESSAGE_COMMA       DC.B    ',',0
+
+SP              EQU     $8000
 
     END    START        ; last line of source
 
