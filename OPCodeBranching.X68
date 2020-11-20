@@ -145,6 +145,44 @@ ONEONE
     CMP.B   #$2,D6
     BEQ     ONEONE_SHIFT_SUBROUTINE ;MARTIN'S WORKING ON THIS
     
+*++++++++++++++++++++++++++++++++++AND+++++++++++++++++++
+*--------------------------------------------
+*BRANCH SUBROUTINE 
+*CHECKING ADD VS ADDA
+*D7 = ORIGINAL WORD OF MEMORY 
+PROCESS_AND
+*----I/O AND----
+    LEA     MESSAGE_AND,A1
+    MOVE.B  #14,D0
+    TRAP    #15
+    
+    BRA     PRINT_OPMODE
+    
+*++++++++++++++++++++++++++++++++++OR+++++++++++++++++++
+*--------------------------------------------
+*PROCESS OUTPUT FOR OR
+*D7 = ORIGINAL WORD OF MEMORY 
+PROCESS_OR
+*----I/O OR----
+    LEA     MESSAGE_OR,A1
+    MOVE.B  #14,D0
+    TRAP    #15
+    
+    BRA     PRINT_OPMODE
+    
+*++++++++++++++++++++++++++++++++++SUB+++++++++++++++++++
+*--------------------------------------------
+*PROCESS OUTPUT FOR SUB
+*D7 = ORIGINAL WORD OF MEMORY 
+PROCESS_SUB
+*----I/O SUB----
+    LEA     MESSAGE_SUB,A1
+    MOVE.B  #14,D0
+    TRAP    #15
+    
+    BRA     PRINT_OPMODE
+    
+*++++++++++++++++++++++++++++++++++ADD,ADDA,ADDQ+++++++++++++++++++
 *--------------------------------------------
 *BRANCH SUBROUTINE 
 *CHECKING ADD VS ADDA
@@ -164,6 +202,108 @@ ADD_BRANCH_SUBROUTINE
     
 *----ALL OTHER ADD---
     BRA     PROCESS_ADD     ;ADD
+ 
+*--------------------------------------------
+*PROCESS PRINT FOR ADDA
+*D7=ORIGINAL
+PROCESS_ADDA   
+*----I/O ADDA----
+    LEA     MESSAGE_ADDA,A1
+    MOVE.B  #14,D0
+    TRAP #15
+    
+*----SETUP FOR SIZE COMPARE----
+    MOVE.W  D7,D6
+    LSR.W   #$6,D6
+    
+*----COMPARE FOR OPMODE----
+    CMP.B   #$3,D6
+    BEQ     PROCESS_ADDA_WORD
+    
+    CMP.B   #$7,D6
+    BEQ     PROCESS_ADDA_LONG
+    
+*--------------------------------------------
+*PROCESS ADDA FORMAT 'ADDA.W <EA>,An
+*D7=ORIGINAL
+PROCESS_ADDA_WORD
+*----SIZE OUTPUT----
+    LEA     MESSAGE_WORD,A1
+    MOVE.B  #14,D0
+    TRAP    #15
+    
+*----EA OUTPUT----
+    MOVE.W  D7,D6
+    AND.W   #$001F,D6
+    MOVEM.W D7/A5/A6,-(SP)
+    BRA     DeAddr              ;PRINT EA
+    
+*----PRINT COMMA----
+    LEA MESSAGE_COMMA,A1
+    MOVE.B  #14,D0
+    TRAP    #15
+    
+*----DIRECTORY OUTPUT----
+    MOVEM.W +(SP),D7,A5,A6
+    LEA     MESSAGE_ADDRESS,A1
+    MOVE.B  #14,D0
+    TRAP    #15
+    
+*----DIRECTORY NUMBER----
+    MOVE.W  D7,D6
+    AND.W   #$0E00,D6
+    ROL.W   #$7,D6
+    MOVE.B  #3,D0
+    MOVE.B  D6,D1
+    TRAP    #15
+    
+*----NEW LINE----
+    LEA     newline,A1
+    MOVE.B  #14,D0
+    TRAP    #15  
+    
+    BRA     PRIMELOOP
+    
+*--------------------------------------------
+*PROCESS ADDA FORMAT 'ADDA.L <EA>,An
+*D7=ORIGINAL
+PROCESS_ADDA_LONG
+*----SIZE OUTPUT----
+    LEA     MESSAGE_LONG,A1
+    MOVE.B  #14,D0
+    TRAP    #15
+    
+*----EA OUTPUT----
+    MOVE.W  D7,D6
+    AND.W   #$001F,D6
+    MOVEM.W D7/A5/A6,-(SP)
+    BRA     DeAddr              ;PRINT EA
+    
+*----PRINT COMMA----
+    LEA MESSAGE_COMMA,A1
+    MOVE.B  #14,D0
+    TRAP    #15
+    
+*----DIRECTORY OUTPUT----
+    MOVEM.W +(SP),D7,A5,A6
+    LEA     MESSAGE_DIRECTORY,A1
+    MOVE.B  #14,D0
+    TRAP    #15
+    
+*----DIRECTORY NUMBER----
+    MOVE.W  D7,D6
+    AND.W   #$0E00,D6
+    ROL.W   #$7,D6
+    MOVE.B  #3,D0
+    MOVE.B  D6,D1
+    TRAP    #15
+    
+*----NEW LINE----
+    LEA     newline,A1
+    MOVE.B  #14,D0
+    TRAP    #15  
+    
+    BRA     PRIMELOOP
     
 *--------------------------------------------
 *PROCESS PRINT FOR ADD
@@ -174,33 +314,38 @@ PROCESS_ADD
     MOVE.B  #14,D0
     TRAP    #15
     
+    BRA     PRINT_OPMODE
+    
+*++++++++++++++++++++++++++++++++++OUTPUT REGISTER, OPMODE, & EA+++++++++++++++++++
+*OUTPUT PRINT FOR ADD, ADDA, SUB, AND, OR
+*=D7 = ORIGINAL WORD
+PRINT_OPMODE
 *----SETUP FOR SIZE COMPARE----
     MOVE.W  D7,D6
     LSR.W   #$6,D6
     
 *----COMPARE FOR OPMODE----
     CMP.B   #$0,D6
-    BEQ     PROCESS_ADD_BYTEa
+    BEQ     PROCESS_OPMODE_BYTEa
     
     CMP.B   #$1,D6
-    BEQ     PROCESS_ADD_WORDa
+    BEQ     PROCESS_OPMODE_WORDa
     
     CMP.B   #$2,D6
-    BEQ     PROCESS_ADD_LONGa
+    BEQ     PROCESS_OPMODE_LONGa
     
     CMP.B   #$4,D6
-    BEQ     PROCESS_ADD_BYTEb
+    BEQ     PROCESS_OPMODE_BYTEb
     
     CMP.B   #$5,D6
-    BEQ     PROCESS_ADD_WORDb
+    BEQ     PROCESS_OPMODE_WORDb
     
     CMP.B   #$6,D6
-    BEQ     PROCESS_ADD_LONGb
-    
+    BEQ     PROCESS_OPMODE_LONGb
 *--------------------------------------------
-*PROCESS ADD FORMAT 'ADD.B <EA>,Dn
+*PROCESS & OUTPUT FOR ADD, AND, OR, SUB FORMAT 'ADD.B <EA>,Dn
 *D7=ORIGINAL
-PROCESS_ADD_BYTEa
+PROCESS_OPMODE_BYTEa
 *----SIZE OUTPUT----
     LEA     MESSAGE_BYTE,A1
     MOVE.B  #14,D0
@@ -239,9 +384,9 @@ PROCESS_ADD_BYTEa
     BRA     PRIMELOOP
   
 *--------------------------------------------
-*PROCESS ADD FORMAT 'ADD.W <EA>,Dn
+*PROCESS & OUTPUT FOR ADD, AND, OR, SUB FORMAT 'ADD.W <EA>,Dn
 *D7=ORIGINAL
-PROCESS_ADD_WORDa
+PROCESS_OPMODE_WORDa
 *----SIZE OUTPUT----
     LEA     MESSAGE_WORD,A1
     MOVE.B  #14,D0
@@ -280,9 +425,9 @@ PROCESS_ADD_WORDa
     BRA     PRIMELOOP
 
 *--------------------------------------------
-*PROCESS ADD FORMAT 'ADD.L <EA>,Dn
+*PROCESS & OUTPUT FOR ADD, AND, OR, SUB FORMAT 'ADD.L <EA>,Dn
 *D7=ORIGINAL
-PROCESS_ADD_LONGa
+PROCESS_OPMODE_LONGa
 *----SIZE OUTPUT----
     LEA     MESSAGE_LONG,A1
     MOVE.B  #14,D0
@@ -321,9 +466,9 @@ PROCESS_ADD_LONGa
     BRA     PRIMELOOP
     
 *--------------------------------------------
-*PROCESS ADD FORMAT 'ADD.B Dn,<EA>
+*PROCESS & OUTPUT FOR ADD, AND, OR, SUB FORMAT 'ADD.B Dn,<EA>
 *D7=ORIGINAL
-PROCESS_ADD_BYTEb
+PROCESS_OPMODE_BYTEb
 *----SIZE OUTPUT----
     LEA     MESSAGE_BYTE,A1
     MOVE.B  #14,D0
@@ -362,9 +507,9 @@ PROCESS_ADD_BYTEb
     BRA     PRIMELOOP
    
 *--------------------------------------------
-*PROCESS ADD FORMAT 'ADD.W Dn,<EA>
+*PROCESS & OUTPUT FOR ADD, AND, OR, SUB FORMAT 'ADD.W Dn,<EA>
 *D7=ORIGINAL
-PROCESS_ADD_WORDb
+PROCESS_OPMODE_WORDb
 *----SIZE OUTPUT----
     LEA     MESSAGE_WORD,A1
     MOVE.B  #14,D0
@@ -403,9 +548,9 @@ PROCESS_ADD_WORDb
     BRA     PRIMELOOP
  
  *--------------------------------------------
-*PROCESS ADD FORMAT 'ADD.L Dn,<EA>
+*PROCESS & OUTPUT FOR ADD, AND, OR, SUB FORMAT 'ADD.L Dn,<EA>
 *D7=ORIGINAL
-PROCESS_ADD_LONGb
+PROCESS_OPMODE_LONGb
 *----SIZE OUTPUT----
     LEA     MESSAGE_LONG,A1
     MOVE.B  #14,D0
@@ -443,6 +588,7 @@ PROCESS_ADD_LONGb
     
     BRA     PRIMELOOP
 
+*++++++++++++++++++++++++++++++++++Bcc+++++++++++++++++++
 *--------------------------------------------
 *PROCESS BCC'S SUBROUTINE FOR CONDITION
 *D7=ORIGINAL   
@@ -679,17 +825,22 @@ PRINT_8BIT
 
     SIMHALT             ; halt simulator
 
-CR              EQU     $0D
-LF              EQU     $0A
+CR                  EQU     $0D
+LF                  EQU     $0A
 
-MESSAGE_ADD DC.B    'ADD',0
-MESSAGE_BYTE    DC.B    '.B    ',0
-MESSAGE_WORD    DC.B    '.W    ',0
-MESSGAE_LONG    DC.B    '.L    ',0
+MESSAGE_ADD         DC.B    'ADD',0
+MESSAGE_ADDA        DC.B    'ADDA',0
+MESSAGE_AND         DC.B    'AND',0
+MESSAGE_OR          DC.B    'OR',0
+MESSAGE_SUB         DC.B    'SUB',0
+
+MESSAGE_BYTE        DC.B    '.B    ',0
+MESSAGE_WORD        DC.B    '.W    ',0
+MESSGAE_LONG        DC.B    '.L    ',0
 MESSAGE_DIRECTORY   DC.B    'D'
 MESSAGE_COMMA       DC.B    ',',0
 
-SP              EQU     $8000
+SP                  EQU     $8000
 
     END    START        ; last line of source
 
