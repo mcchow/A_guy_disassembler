@@ -145,10 +145,90 @@ ONEONE
     CMP.B   #$2,D6
     BEQ     ONEONE_SHIFT_SUBROUTINE ;MARTIN'S WORKING ON THIS
     
+*++++++++++++++++++++++++++++++++++NOT+++++++++++++++++++
+*--------------------------------------------
+*PROCESS OUTPUT FOR NOT
+*D7 = ORIGINAL WORD OF MEMORY 
+PROCESS_NOT
+*----I/O NOT----
+    LEA     MESSAGE_NOT,A1
+    MOVE.B  #14,D0
+    TRAP    #15
+    
+*----SETUP FOR COMPARE----
+    MOVE.W  D7,D6
+    AND.W   #$00C0,D6
+    LSR.B   #6,D6
+    
+*----CHECK FOR BYTE----
+    CMP.B   #$0,D6
+    BEQ     PRINT_NOT_BYTE
+
+*----CHECK FOR WORD----
+    CMP.B   #$1,D6
+    BEQ     PRINT_NOT_WORD
+
+*----CHECK FOR LONG----
+    CMP.B   #$2,D6
+    BEQ     PRINT_NOT_LONG
+    
+*--------------------------------------------
+*PROCESS OUTPUT FOR NOT BYTE & EA
+*D7 = ORIGINAL WORD OF MEMORY 
+PRINT_NOT_BYTE
+*----I/O BYTE----
+    LEA     MESSAGE_BYTE,A1
+    MOVE.B  #14,D0
+    TRAP    #15
+    
+*----SETUP EA----
+    MOVE.W  D7,D6
+    AND.W   #$003F
+    MOVEM.W D7/A5/A6,-(SP)
+    BRA     DeAddr              ;PRINT EA
+    
+    MOVEM.W +(SP),D7/A5/A6
+    BRA     PRIMELOOP
+
+*--------------------------------------------
+*PROCESS OUTPUT FOR NOT WORD & EA
+*D7 = ORIGINAL WORD OF MEMORY 
+PRINT_NOT_WORD
+*----I/O WORD----
+    LEA     MESSAGE_WORD,A1
+    MOVE.B  #14,D0
+    TRAP    #15
+    
+*----SETUP EA----
+    MOVE.W  D7,D6
+    AND.W   #$003F
+    MOVEM.W D7/A5/A6,-(SP)
+    BRA     DeAddr              ;PRINT EA
+    
+    MOVEM.W +(SP),D7/A5/A6
+    BRA     PRIMELOOP
+
+*--------------------------------------------
+*PROCESS OUTPUT FOR NOT LONG & EA
+*D7 = ORIGINAL WORD OF MEMORY 
+PRINT_NOT_LONG
+*----I/O BYTE----
+    LEA     MESSAGE_LONG,A1
+    MOVE.B  #14,D0
+    TRAP    #15
+    
+*----SETUP EA----
+    MOVE.W  D7,D6
+    AND.W   #$003F
+    MOVEM.W D7/A5/A6,-(SP)
+    BRA     DeAddr              ;PRINT EA
+    
+    MOVEM.W +(SP),D7/A5/A6
+    BRA     PRIMELOOP 
+    
 *++++++++++++++++++++++++++++++++++AND+++++++++++++++++++
 *--------------------------------------------
-*BRANCH SUBROUTINE 
-*CHECKING ADD VS ADDA
+*PROCESS OUTPUT FOR AND
 *D7 = ORIGINAL WORD OF MEMORY 
 PROCESS_AND
 *----I/O AND----
@@ -234,7 +314,7 @@ PROCESS_ADDA_WORD
     
 *----EA OUTPUT----
     MOVE.W  D7,D6
-    AND.W   #$001F,D6
+    AND.W   #$003F,D6
     MOVEM.W D7/A5/A6,-(SP)
     BRA     DeAddr              ;PRINT EA
     
@@ -275,7 +355,7 @@ PROCESS_ADDA_LONG
     
 *----EA OUTPUT----
     MOVE.W  D7,D6
-    AND.W   #$001F,D6
+    AND.W   #$003F,D6
     MOVEM.W D7/A5/A6,-(SP)
     BRA     DeAddr              ;PRINT EA
     
@@ -351,37 +431,9 @@ PROCESS_OPMODE_BYTEa
     MOVE.B  #14,D0
     TRAP    #15
     
-*----EA OUTPUT----
-    MOVE.W  D7,D6
-    AND.W   #$001F,D6
-    MOVEM.W D7/A5/A6,-(SP)
-    BRA     DeAddr              ;PRINT EA
+    BRA     PRINT_EA_Dn
     
-*----PRINT COMMA----
-    LEA MESSAGE_COMMA,A1
-    MOVE.B  #14,D0
-    TRAP    #15
-    
-*----DIRECTORY OUTPUT----
-    MOVEM.W +(SP),D7,A5,A6
-    LEA     MESSAGE_DIRECTORY,A1
-    MOVE.B  #14,D0
-    TRAP    #15
-    
-*----DIRECTORY NUMBER----
-    MOVE.W  D7,D6
-    AND.W   #$0E00,D6
-    ROL.W   #$7,D6
-    MOVE.B  #3,D0
-    MOVE.B  D6,D1
-    TRAP    #15
-    
-*----NEW LINE----
-    LEA     newline,A1
-    MOVE.B  #14,D0
-    TRAP    #15
-    
-    BRA     PRIMELOOP
+
   
 *--------------------------------------------
 *PROCESS & OUTPUT FOR ADD, AND, OR, SUB FORMAT 'ADD.W <EA>,Dn
@@ -392,37 +444,7 @@ PROCESS_OPMODE_WORDa
     MOVE.B  #14,D0
     TRAP    #15
     
-*----EA OUTPUT----
-    MOVE.W  D7,D6
-    AND.W   #$001F,D6
-    MOVEM.W D7/A5/A6,-(SP)
-    BRA     DeAddr              ;PRINT EA
-    
-*----PRINT COMMA----
-    LEA MESSAGE_COMMA,A1
-    MOVE.B  #14,D0
-    TRAP    #15
-    
-*----DIRECTORY OUTPUT----
-    MOVEM.W +(SP),D7,A5,A6
-    LEA     MESSAGE_DIRECTORY,A1
-    MOVE.B  #14,D0
-    TRAP    #15
-    
-*----DIRECTORY NUMBER----
-    MOVE.W  D7,D6
-    AND.W   #$0E00,D6
-    ROL.W   #$7,D6
-    MOVE.B  #3,D0
-    MOVE.B  D6,D1
-    TRAP    #15
-    
-*----NEW LINE----
-    LEA     newline,A1
-    MOVE.B  #14,D0
-    TRAP    #15  
-    
-    BRA     PRIMELOOP
+    BRA     PRINT_EA_Dn
 
 *--------------------------------------------
 *PROCESS & OUTPUT FOR ADD, AND, OR, SUB FORMAT 'ADD.L <EA>,Dn
@@ -433,17 +455,23 @@ PROCESS_OPMODE_LONGa
     MOVE.B  #14,D0
     TRAP    #15
     
+    BRA     PRINT_EA_Dn
+    
+*--------------------------------------------
+*PROCESS & OUTPUT FOR ADD, AND, OR, SUB FORMAT 'ADD.B <EA>,Dn
+*D7=ORIGINAL
+PRINT_EA_Dn
 *----EA OUTPUT----
     MOVE.W  D7,D6
-    AND.W   #$001F,D6
+    AND.W   #$003F,D6
     MOVEM.W D7/A5/A6,-(SP)
     BRA     DeAddr              ;PRINT EA
- 
+    
 *----PRINT COMMA----
     LEA MESSAGE_COMMA,A1
     MOVE.B  #14,D0
     TRAP    #15
-   
+    
 *----DIRECTORY OUTPUT----
     MOVEM.W +(SP),D7,A5,A6
     LEA     MESSAGE_DIRECTORY,A1
@@ -474,37 +502,7 @@ PROCESS_OPMODE_BYTEb
     MOVE.B  #14,D0
     TRAP    #15
     
-*----DIRECTORY OUTPUT----
-    MOVEM.W +(SP),D7,A5,A6
-    LEA     MESSAGE_DIRECTORY,A1
-    MOVE.B  #14,D0
-    TRAP    #15
-    
-*----DIRECTORY NUMBER----
-    MOVE.W  D7,D6
-    AND.W   #$0E00,D6
-    ROL.W   #$7,D6
-    MOVE.B  #3,D0
-    MOVE.B  D6,D1
-    TRAP    #15
-   
-*----PRINT COMMA----
-    LEA MESSAGE_COMMA,A1
-    MOVE.B  #14,D0
-    TRAP    #15
- 
-*----EA OUTPUT----
-    MOVE.W  D7,D6
-    AND.W   #$001F,D6
-    MOVEM.W D7/A5/A6,-(SP)
-    BRA     DeAddr              ;PRINT EA
-    
-*----NEW LINE----
-    LEA     newline,A1
-    MOVE.B  #14,D0
-    TRAP    #15
-    
-    BRA     PRIMELOOP
+    BRA     PRINT_Dn_EA
    
 *--------------------------------------------
 *PROCESS & OUTPUT FOR ADD, AND, OR, SUB FORMAT 'ADD.W Dn,<EA>
@@ -515,37 +513,7 @@ PROCESS_OPMODE_WORDb
     MOVE.B  #14,D0
     TRAP    #15
     
-*----DIRECTORY OUTPUT----
-    MOVEM.W +(SP),D7,A5,A6
-    LEA     MESSAGE_DIRECTORY,A1
-    MOVE.B  #14,D0
-    TRAP    #15
-    
-*----DIRECTORY NUMBER----
-    MOVE.W  D7,D6
-    AND.W   #$0E00,D6
-    ROL.W   #$7,D6
-    MOVE.B  #3,D0
-    MOVE.B  D6,D1
-    TRAP    #15
-   
-*----PRINT COMMA----
-    LEA MESSAGE_COMMA,A1
-    MOVE.B  #14,D0
-    TRAP    #15
- 
-*----EA OUTPUT----
-    MOVE.W  D7,D6
-    AND.W   #$001F,D6
-    MOVEM.W D7/A5/A6,-(SP)
-    BRA     DeAddr              ;PRINT EA
-    
-*----NEW LINE----
-    LEA     newline,A1
-    MOVE.B  #14,D0
-    TRAP    #15
-
-    BRA     PRIMELOOP
+    BRA PRINT_Dn_EA
  
  *--------------------------------------------
 *PROCESS & OUTPUT FOR ADD, AND, OR, SUB FORMAT 'ADD.L Dn,<EA>
@@ -556,6 +524,12 @@ PROCESS_OPMODE_LONGb
     MOVE.B  #14,D0
     TRAP    #15
     
+    BRA     PRINT_Dn_EA
+    
+ *--------------------------------------------
+*PROCESS & OUTPUT FOR ADD, AND, OR, SUB FORMAT 'ADD.L Dn,<EA>
+*D7=ORIGINAL
+PRINT_Dn_EA
 *----DIRECTORY OUTPUT----
     MOVEM.W +(SP),D7,A5,A6
     LEA     MESSAGE_DIRECTORY,A1
@@ -577,7 +551,7 @@ PROCESS_OPMODE_LONGb
  
 *----EA OUTPUT----
     MOVE.W  D7,D6
-    AND.W   #$001F,D6
+    AND.W   #$003F,D6
     MOVEM.W D7/A5/A6,-(SP)
     BRA     DeAddr              ;PRINT EA
     
@@ -837,7 +811,8 @@ MESSAGE_SUB         DC.B    'SUB',0
 MESSAGE_BYTE        DC.B    '.B    ',0
 MESSAGE_WORD        DC.B    '.W    ',0
 MESSGAE_LONG        DC.B    '.L    ',0
-MESSAGE_DIRECTORY   DC.B    'D'
+MESSAGE_DIRECTORY   DC.B    'D',0
+MESSAGE_ADDRESS     DC.B    'A',0
 MESSAGE_COMMA       DC.B    ',',0
 
 SP                  EQU     $8000
