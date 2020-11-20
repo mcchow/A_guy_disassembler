@@ -144,7 +144,75 @@ ONEONE
 *CHECK FOR LSd, ASd, & ROd
     CMP.B   #$2,D6
     BEQ     ONEONE_SHIFT_SUBROUTINE ;MARTIN'S WORKING ON THIS
+ 
+ *++++++++++++++++++++++++++++++++++LEA+++++++++++++++++++
+*--------------------------------------------
+*PROCESS OUTPUT FOR LEA
+*D7 = ORIGINAL WORD OF MEMORY 
+PROCESS_LEA
+*----I/O LEA----
+    LEA     MESSAGE_LEA,A1
+    MOVE.B  #14,D0
+    TRAP    #15
     
+*----SETUP EA----
+    MOVE.W  D7,D6
+    AND.W   #$003F
+    MOVEM.W D7/A5/A6,-(SP)
+    BRA     DeAddr              ;PRINT EA
+    
+    MOVEM.W +(SP),D7/A5/A6
+
+*----COMMA----
+    LEA     MESSAGE_COMMA,A1
+    MOVE.B  #14,D0
+    TRAP    #15
+    
+*----An----
+    MOVE.W  D7,D6
+    AND.W   #$0E00,D6
+    ROL.W   #$7,D6
+    
+    LEA     MESSAGE_ADDRESS,A1
+    MOVE.B  #14,D0
+    TRAP    #15
+    
+    MOVE.B  D6,D1
+    MOVE.B  #3,D0
+    TRAP    #15
+    
+*----NEW LINE----
+    LEA     newline,A1
+    MOVE.B  #14,D0
+    TRAP    #15  
+    
+    BRA     PRIMELOOP
+
+*++++++++++++++++++++++++++++++++++JSR+++++++++++++++++++
+*--------------------------------------------
+*PROCESS OUTPUT FOR JSR
+*D7 = ORIGINAL WORD OF MEMORY 
+PROCESS_JSR
+*----I/O JSR----
+    LEA     MESSAGE_JSR,A1
+    MOVE.B  #14,D0
+    TRAP    #15
+    
+*----SETUP EA----
+    MOVE.W  D7,D6
+    AND.W   #$003F
+    MOVEM.W D7/A5/A6,-(SP)
+    BRA     DeAddr              ;PRINT EA
+    
+    MOVEM.W +(SP),D7/A5/A6
+
+*----NEW LINE----
+    LEA     newline,A1
+    MOVE.B  #14,D0
+    TRAP    #15  
+    
+    BRA     PRIMELOOP
+   
 *++++++++++++++++++++++++++++++++++NOT+++++++++++++++++++
 *--------------------------------------------
 *PROCESS OUTPUT FOR NOT
@@ -188,6 +256,12 @@ PRINT_NOT_BYTE
     BRA     DeAddr              ;PRINT EA
     
     MOVEM.W +(SP),D7/A5/A6
+
+*----NEW LINE----
+    LEA     newline,A1
+    MOVE.B  #14,D0
+    TRAP    #15  
+    
     BRA     PRIMELOOP
 
 *--------------------------------------------
@@ -206,6 +280,12 @@ PRINT_NOT_WORD
     BRA     DeAddr              ;PRINT EA
     
     MOVEM.W +(SP),D7/A5/A6
+    
+*----NEW LINE----
+    LEA     newline,A1
+    MOVE.B  #14,D0
+    TRAP    #15  
+    
     BRA     PRIMELOOP
 
 *--------------------------------------------
@@ -224,6 +304,12 @@ PRINT_NOT_LONG
     BRA     DeAddr              ;PRINT EA
     
     MOVEM.W +(SP),D7/A5/A6
+    
+    *----NEW LINE----
+    LEA     newline,A1
+    MOVE.B  #14,D0
+    TRAP    #15  
+    
     BRA     PRIMELOOP 
     
 *++++++++++++++++++++++++++++++++++AND+++++++++++++++++++
@@ -489,7 +575,7 @@ PRINT_EA_Dn
 *----NEW LINE----
     LEA     newline,A1
     MOVE.B  #14,D0
-    TRAP    #15
+    TRAP    #15  
     
     BRA     PRIMELOOP
     
@@ -777,6 +863,11 @@ DISPLACEMENT_BCC
 PRINT_16BIT
     *I/O CODE
     *DISPLACEMENT = NEXT WORD FROM A5
+*----NEW LINE----
+    LEA     newline,A1
+    MOVE.B  #14,D0
+    TRAP    #15  
+    
     BRA     PRIMELOOP
     
 *--------------------------------------------
@@ -785,6 +876,11 @@ PRINT_16BIT
 PRINT_32BIT
     *I/O CODE
     *DISPLACEMENT = NEXT LONG FROM A5
+*----NEW LINE----
+    LEA     newline,A1
+    MOVE.B  #14,D0
+    TRAP    #15  
+    
     BRA     PRIMELOOP
     
 *--------------------------------------------
@@ -793,6 +889,11 @@ PRINT_32BIT
 PRINT_8BIT
     *I/O CODE
     *DISPLACEMENT IN D6 OR LAST 8 BITS OF D7
+*----NEW LINE----
+    LEA     newline,A1
+    MOVE.B  #14,D0
+    TRAP    #15  
+    
     BRA     PRIMELOOP
     
     
@@ -807,6 +908,9 @@ MESSAGE_ADDA        DC.B    'ADDA',0
 MESSAGE_AND         DC.B    'AND',0
 MESSAGE_OR          DC.B    'OR',0
 MESSAGE_SUB         DC.B    'SUB',0
+MESSAGE_NOT         DC.B    'NOT',0
+MESSGAE_JSR         DC.B    'JSR    ',0
+MESSAGE_LEA         DC.B    'LEA    ',0
 
 MESSAGE_BYTE        DC.B    '.B    ',0
 MESSAGE_WORD        DC.B    '.W    ',0
