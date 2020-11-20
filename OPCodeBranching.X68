@@ -617,7 +617,7 @@ PROCESS_OPMODE_LONGb
 *D7=ORIGINAL
 PRINT_Dn_EA
 *----DIRECTORY OUTPUT----
-    MOVEM.W +(SP),D7,A5,A6
+    
     LEA     MESSAGE_DIRECTORY,A1
     MOVE.B  #14,D0
     TRAP    #15
@@ -641,6 +641,7 @@ PRINT_Dn_EA
     MOVEM.W D7/A5/A6,-(SP)
     BRA     DeAddr              ;PRINT EA
     
+    MOVEM.W +(SP),D7,A5,A6
 *----NEW LINE----
     LEA     newline,A1
     MOVE.B  #14,D0
