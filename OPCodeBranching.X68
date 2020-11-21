@@ -42,8 +42,18 @@ PRIMELOOP
 *MOVE & MOVEA
 *D7 = ORIGINAL WORD OF MEMORY
 ZEROZERO
-    *Martin's MOVE and MOVEA code
+*----SETUP----
+    MOVE.W  D7,D6
+    AND.W   #$01C0,D6       ;CLEAR ALL BUT BITS 8-6
+    LSL.W   #6,D6           ;MOVE BITS 8-6 TO 2-0
     
+*----MOVEA----
+    CMP.B   #01,D6
+    BEQ     PROCESS_MOVEA
+    
+*----MOVE----
+    BRA     PROCESS_MOVE    ;ALL OTHERS ARE MOVE
+
 *--------------------------------------------
 *NOP, MOVEQ, MOVEM, ADDQ, LEA, NOT, BCC, JSR, & RTS
 *D7 = ORIGINAL WORD OF MEMORY
@@ -144,8 +154,283 @@ ONEONE
 *CHECK FOR LSd, ASd, & ROd
     CMP.B   #$2,D6
     BEQ     ONEONE_SHIFT_SUBROUTINE ;MARTIN'S WORKING ON THIS
- 
- *++++++++++++++++++++++++++++++++++LEA+++++++++++++++++++
+
+*++++++++++++++++++++++++++++++++++MOVE, MOVEA, MOVEQ, MOVEM+++++++++++++++++++
+*--------------------------------------------
+*PROCESS OUTPUT FOR MOVEA
+*D7 = ORIGINAL WORD OF MEMORY 
+PROCESS_MOVEA
+*----I/O MOVEA----
+    LEA     MESSAGE_MOVEA,A1
+    MOVE.B  #14,D0
+    TRAP    #15
+    
+*----COMPARE SIZE----
+    MOVE.W  D7,D6
+    AND.W   #$3000,D6
+    ROL.W   #4,D6
+    
+    CMP.B   #3,D6
+    BEQ     PRINT_MOVE_WORD
+    
+    CMP.B   #2,D6
+    BEQ     PRINT_MOVE_LONG
+    
+*--------------------------------------------
+*PROCESS OUTPUT FOR MOVE
+*D7 = ORIGINAL WORD OF MEMORY 
+PROCESS_MOVE
+*----I/O MOVE----
+    LEA     MESSAGE_MOVE,A1
+    MOVE.B  #14,D0
+    TRAP    #15
+    
+*----COMPARE SIZE----
+    MOVE.W  D7,D6
+    AND.W   #$3000,D6
+    ROL.W   #4,D6
+    
+    CMP.B   #1,D6
+    BEQ     PRINT_MOVE_BYTE
+    
+    CMP.B   #3,D6
+    BEQ     PRINT_MOVE_WORD
+    
+    CMP.B   #2,D6
+    BEQ     PRINT_MOVE_LONG
+    
+*--------------------------------------------
+*PROCESS OUTPUT FOR MOVEQ
+*D7 = ORIGINAL WORD OF MEMORY 
+PROCESS_MOVEQ
+*----I/O MOVEQ----
+    LEA     MESSAGE_MOVEQ,A1
+    MOVE.B  #14,D0
+    TRAP    #15
+    
+*----I/O LONG----   ;ONLY CAN BE LONG
+    LEA     MESSAGE_LONG,A1
+    MOVE.B  #14,D0
+    TRAP    #15
+    
+*----I/O HEX---
+    LEA     MESSAGE_HEX,A1
+    MOVE.B  #14,D0
+    TRAP    #15
+    
+*----I/O DATA(HEX FORMAT)----
+    MOVE.W  D7,D6
+    AND.W   #$00FF,D6
+    MOVE.B  D6,D1
+    MOVE.B  #15,D0
+    MOVE.B  #16,D2      ;PRINT AS HEX
+    TRAP    #15
+    
+*----COMMA----
+    LEA     MESSGE_COMMA,A1
+    MOVE.B  #14,D0
+    TRAP    #15
+    
+*----I/O REGISTER---- 
+    LEA     MESSAGE_DIRECTORY,A1
+    MOVE.B  #14,D0
+    TRAP    #15
+    
+*----DIRECTORY NUMBER I/O----
+    MOVE.W  D7,D6
+    AND.W   #$0E00,D6
+    ROL.W   #7,D6
+    MOVE.B  D6,D1
+    MOVE.B  #10,D2
+    MOVE.B  #15,D0
+    TRAP    #15
+    
+*----NEW LINE----
+    LEA     newline,A1
+    MOVE.B  #14,D0
+    TRAP    #15  
+    
+    BRA     PRIMELOOP 
+    
+*--------------------------------------------
+*PROCESS OUTPUT FOR MOVEQ
+*D7 = ORIGINAL WORD OF MEMORY 
+PROCESS_MOVEM
+*----I/O MOVEM----
+    LEA     MESSAGE_MOVEM,A1
+    MOVE.B  #14,D0
+    TRAP    #15
+    
+*----CHECK SIZE----
+    MOVE.W  D7,D6
+    AND.W   #$0040,D6
+    LSR.B   #6,D6
+    
+    CMP.B   #0,D6
+    BEQ     PRINT_MOVEM_WORD
+    
+    CMP.B   #1,D6
+    BEQ     PRINT_MOVEM_LONG
+
+*--------------------------------------------
+*PROCESS OUTPUT FOR MOVEM WORD
+*D7 = ORIGINAL WORD OF MEMORY 
+PRINT_MOVEM_WORD
+*----I/O WORD----
+    LEA     MESSAGE_WORD,A1
+    MOVE.B  #14,D0
+    TRAP    #15
+    
+    BRA     PRINT_MOVEM_DIRECTION
+    
+*--------------------------------------------
+*PROCESS OUTPUT FOR MOVEM LONG
+*D7 = ORIGINAL WORD OF MEMORY 
+PRINT_MOVEM_LONG
+*----I/O WORD----
+    LEA     MESSAGE_LONG,A1
+    MOVE.B  #14,D0
+    TRAP    #15
+    
+    BRA     PRINT_MOVEM_DIRECTION
+    
+*--------------------------------------------
+*PROCESS OUTPUT FOR MOVEM DIRECTION
+*D7 = ORIGINAL WORD OF MEMORY 
+PRINT_MOVEM_DIRECTION
+*----CHECK IF REG TO MEM OR MEM TO REG----
+    MOVE.W  D7,D6
+    AND.W   #$0400,D6
+    ROL.W   #6,D6
+    
+    CMP.B   #0,D6
+    BEQ     PRINT_MOVEM_REGTOMEM
+    
+    CMP.B   #1,D6
+    BEQ     PRINT_MOVEM_MEMTOREG
+    
+*--------------------------------------------
+*PROCESS OUTPUT FOR MOVEM REGISTARS TO MEMORY
+*D7 = ORIGINAL WORD OF MEMORY 
+PRINT_MOVEM_REGTOMEM
+*----I/O DATA REG----
+    *//TODO
+    
+*----COMMA----
+    LEA     MESSAGE_COMMA,A1
+    MOVE.B  #14,D0
+    TRAP    #15
+    
+*----I/O EA----
+    MOVE.W  D7,D6
+    AND.W   #$003F,D6
+    MOVEM.W D7/A5/A6,-(SP)
+    JMP     DeAddr              ;PRINT EA
+    
+    MOVEM.W +(SP),D7/A5/A6
+    
+*----NEW LINE----
+    LEA     newline,A1
+    MOVE.B  #14,D0
+    TRAP    #15
+    
+    BRA     PRIMELOOP
+    
+*--------------------------------------------
+*PROCESS OUTPUT FOR MOVEM MEMORY TO REGISTARS
+*D7 = ORIGINAL WORD OF MEMORY 
+PRINT_MOVEM_MEMTOREG
+*----I/O EA----
+    MOVE.W  D7,D6
+    AND.W   #$003F,D6
+    MOVEM.W D7/A5/A6,-(SP)
+    JMP     DeAddr              ;PRINT EA
+    
+    MOVEM.W +(SP),D7/A5/A6
+
+*----COMMA----
+    LEA     MESSAGE_COMMA,A1
+    MOVE.B  #14,D0
+    TRAP    #15
+    
+*----I/O DATA REG----
+    *//TODO
+    
+*----NEW LINE----
+    LEA     newline,A1
+    MOVE.B  #14,D0
+    TRAP    #15
+    
+    BRA     PRIMELOOP
+    
+*--------------------------------------------
+*PROCESS OUTPUT FOR MOVE & MOVEA BYTE
+*D7 = ORIGINAL WORD OF MEMORY 
+PRINT_MOVE_BYTE
+*----I/O----
+    LEA     MESSAGE_BYTE,A1
+    MOVE.B  #14,D0
+    TRAP    #15
+    
+    BRA     PRINT_MOVE_EA
+    
+*--------------------------------------------
+*PROCESS OUTPUT FOR MOVE & MOVEA WORD
+*D7 = ORIGINAL WORD OF MEMORY 
+PRINT_MOVE_WORD
+*----I/O----
+    LEA     MESSAGE_WORD,A1
+    MOVE.B  #14,D0
+    TRAP    #15
+    
+    BRA     PRINT_MOVE_EA
+    
+*--------------------------------------------
+*PROCESS OUTPUT FOR MOVE & MOVEA LONG
+*D7 = ORIGINAL WORD OF MEMORY 
+PRINT_MOVE_LONG
+*----I/O----
+    LEA     MESSAGE_LONG,A1
+    MOVE.B  #14,D0
+    TRAP    #15
+    
+    BRA     PRINT_MOVE_EA
+    
+*--------------------------------------------
+*PROCESS OUTPUT FOR MOVE & MOVEA EA
+*D7 = ORIGINAL WORD OF MEMORY 
+PRINT_MOVE_EA
+*----PRINT SOURCE EA----
+    MOVE.W  D7,D6
+    AND.W   #$003F,D6
+    MOVEM.W D7/A5/A6,-(SP)
+    JMP     DeAddr              ;PRINT EA
+    
+    MOVEM.W +(SP),D7/A5/A6
+    
+*----COMMA----
+    LEA     MESSAGE_COMMA,A1
+    MOVE.B  #14,D0
+    TRAP    #15
+    
+*----PRINT DESTINATION EA----
+    MOVE.W  D7,D6
+    AND.W   #$0FC0,D6  
+    LSR.W   #6,D6
+    MOVEM.W D7/A5/A6,-(SP)
+    JMP     DeAddr              ;PRINT EA
+    
+    MOVEM.W +(SP),D7/A5/A6
+    
+*----NEW LINE----
+    LEA     newline,A1
+    MOVE.B  #14,D0
+    TRAP    #15  
+    
+    BRA     PRIMELOOP 
+    
+
+*++++++++++++++++++++++++++++++++++LEA+++++++++++++++++++
 *--------------------------------------------
 *PROCESS OUTPUT FOR LEA
 *D7 = ORIGINAL WORD OF MEMORY 
@@ -159,7 +444,7 @@ PROCESS_LEA
     MOVE.W  D7,D6
     AND.W   #$003F
     MOVEM.W D7/A5/A6,-(SP)
-    BRA     DeAddr              ;PRINT EA
+    JMP     DeAddr              ;PRINT EA
     
     MOVEM.W +(SP),D7/A5/A6
 
@@ -202,7 +487,7 @@ PROCESS_JSR
     MOVE.W  D7,D6
     AND.W   #$003F
     MOVEM.W D7/A5/A6,-(SP)
-    BRA     DeAddr              ;PRINT EA
+    JMP     DeAddr              ;PRINT EA
     
     MOVEM.W +(SP),D7/A5/A6
 
@@ -253,7 +538,7 @@ PRINT_NOT_BYTE
     MOVE.W  D7,D6
     AND.W   #$003F
     MOVEM.W D7/A5/A6,-(SP)
-    BRA     DeAddr              ;PRINT EA
+    JMP     DeAddr              ;PRINT EA
     
     MOVEM.W +(SP),D7/A5/A6
 
@@ -277,7 +562,7 @@ PRINT_NOT_WORD
     MOVE.W  D7,D6
     AND.W   #$003F
     MOVEM.W D7/A5/A6,-(SP)
-    BRA     DeAddr              ;PRINT EA
+    JMP     DeAddr              ;PRINT EA
     
     MOVEM.W +(SP),D7/A5/A6
     
@@ -301,7 +586,7 @@ PRINT_NOT_LONG
     MOVE.W  D7,D6
     AND.W   #$003F
     MOVEM.W D7/A5/A6,-(SP)
-    BRA     DeAddr              ;PRINT EA
+    JMP     DeAddr              ;PRINT EA
     
     MOVEM.W +(SP),D7/A5/A6
     
@@ -402,7 +687,7 @@ PROCESS_ADDA_WORD
     MOVE.W  D7,D6
     AND.W   #$003F,D6
     MOVEM.W D7/A5/A6,-(SP)
-    BRA     DeAddr              ;PRINT EA
+    JMP     DeAddr              ;PRINT EA
     
 *----PRINT COMMA----
     LEA MESSAGE_COMMA,A1
@@ -443,7 +728,7 @@ PROCESS_ADDA_LONG
     MOVE.W  D7,D6
     AND.W   #$003F,D6
     MOVEM.W D7/A5/A6,-(SP)
-    BRA     DeAddr              ;PRINT EA
+    JMP     DeAddr              ;PRINT EA
     
 *----PRINT COMMA----
     LEA MESSAGE_COMMA,A1
@@ -481,6 +766,99 @@ PROCESS_ADD
     TRAP    #15
     
     BRA     PRINT_OPMODE
+
+*--------------------------------------------
+*PROCESS PRINT FOR ADDQ 
+*D7=ORIGINAL
+PROCESS_ADDQ
+*----I/O ADDQ----
+    LEA     MESSAGE_ADDQ,A1
+    MOVE.B  #14,D0
+    TRAP    #15
+    
+*----COMPARE FOR SIZE----
+    MOVE.W  D7,D6
+    AND.W   #$00C0,D6
+    LSR.W   #6,D6
+    
+    CMP.B   #$0,D6
+    BEQ     PRINT_ADDQ_BYTE
+    
+    CMP.B   #$1,D6
+    BEQ     PRINT_ADDQ_WORD
+    
+    CMP.B   #$2,D6
+    BEQ     PRINT_ADDQ_LONG
+    
+*--------------------------------------------
+*PROCESS PRINT FOR ADDQ 
+*D7=ORIGINAL
+PRINT_ADDQ_BYTE
+*----I/O BYTE----
+    LEA     MESSAGE_BYTE,A1
+    MOVE.B  #14,D0
+    TRAP    #15
+    
+    BRA     PRINT_ADDQ_DATA
+    
+*--------------------------------------------
+*PROCESS PRINT FOR ADDQ 
+*D7=ORIGINAL
+PRINT_ADDQ_WORD
+*----I/O BYTE----
+    LEA     MESSAGE_WORD,A1
+    MOVE.B  #14,D0
+    TRAP    #15
+    
+    BRA     PRINT_ADDQ_DATA
+    
+*--------------------------------------------
+*PROCESS PRINT FOR ADDQ 
+*D7=ORIGINAL
+PRINT_ADDQ_LONG
+*----I/O BYTE----
+    LEA     MESSAGE_LONG,A1
+    MOVE.B  #14,D0
+    TRAP    #15
+    
+    BRA     PRINT_ADDQ_DATA
+    
+*--------------------------------------------
+*PROCESS DATA PRINT FOR ADDQ 
+*D7=ORIGINAL
+PRINT_ADDQ_DATA    
+*----I/O DATA----
+    LEA     MESSAGE_HEX,A1
+    MOVE.B  #14,D0
+    TRAP    #15
+    
+    MOVE.W  D7,D6
+    AND.W   #$0E00,D6
+    ROL.W   #$7,D6
+    MOVE.B  D6,D1
+    MOVE.B  #15,D0
+    MOVE.B  #16,D2
+    TRAP    #15
+    
+*----COMMA----
+    LEA     MESSGAE_COMMA,A1
+    MOVE.B  #14,D0
+    TRAP    #15
+    
+*----EA----
+    MOVE.W  D7,D6
+    AND.W   #$003F,D6
+    MOVEM.W D7/A5/A6,-(SP)
+    JMP     DeAddr              ;PRINT EA
+    
+    MOVEM.W +(SP),D7,A5,A6
+    
+*----NEW LINE----
+    LEA     newline,A1
+    MOVE.B  #14,D0
+    TRAP    #15
+    
+    BRA     PRIME_LOOP
     
 *++++++++++++++++++++++++++++++++++OUTPUT REGISTER, OPMODE, & EA+++++++++++++++++++
 *OUTPUT PRINT FOR ADD, ADDA, SUB, AND, OR
@@ -551,7 +929,7 @@ PRINT_EA_Dn
     MOVE.W  D7,D6
     AND.W   #$003F,D6
     MOVEM.W D7/A5/A6,-(SP)
-    BRA     DeAddr              ;PRINT EA
+    JMP     DeAddr              ;PRINT EA
     
 *----PRINT COMMA----
     LEA MESSAGE_COMMA,A1
@@ -639,7 +1017,7 @@ PRINT_Dn_EA
     MOVE.W  D7,D6
     AND.W   #$003F,D6
     MOVEM.W D7/A5/A6,-(SP)
-    BRA     DeAddr              ;PRINT EA
+    JMP     DeAddr              ;PRINT EA
     
     MOVEM.W +(SP),D7,A5,A6
 *----NEW LINE----
@@ -912,7 +1290,11 @@ MESSAGE_SUB         DC.B    'SUB',0
 MESSAGE_NOT         DC.B    'NOT',0
 MESSGAE_JSR         DC.B    'JSR    ',0
 MESSAGE_LEA         DC.B    'LEA    ',0
+MESSAGE_ADDQ        DC.B    'ADDQ',0
+MESSAGE_MOVEQ       DC.B    'MOVEQ',0
+MESSAGE_MOVEM       DC.B    'MOVEM',0
 
+MESSAGE_HEX         DC.B    '#$',0
 MESSAGE_BYTE        DC.B    '.B    ',0
 MESSAGE_WORD        DC.B    '.W    ',0
 MESSGAE_LONG        DC.B    '.L    ',0
@@ -923,6 +1305,7 @@ MESSAGE_COMMA       DC.B    ',',0
 SP                  EQU     $8000
 
     END    START        ; last line of source
+
 
 *~Font name~Courier New~
 *~Font size~10~
