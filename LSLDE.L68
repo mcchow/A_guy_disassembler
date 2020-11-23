@@ -1,0 +1,102 @@
+00001000 Starting Address
+Assembler used: EASy68K Editor/Assembler v5.16.01
+Created On: 23/11/2020 9:57:16 am
+
+00000000                             1  *-----------------------------------------------------------
+00000000                             2  * Title      :
+00000000                             3  * Written by :
+00000000                             4  * Date       :
+00000000                             5  * Description:
+00000000                             6  *-----------------------------------------------------------
+00001000                             7      ORG    $1000
+00001000                             8  START:                  ; first instruction of program
+00001000                             9  
+00001000                            10  * Put program code here
+00001000  E261                      11      ASR D1,D1
+00001002  E241                      12      ASR #1,D1
+00001004  E0F8 0400                 13      ASR 1024
+00001008                            14  *TEST only , getting input
+00001008  103C 0004                 15      MOVE.B  #4,D0
+0000100C  4E4F                      16      TRAP    #15
+0000100E  3E01                      17      MOVE D1,D7
+00001010                            18  *REAL CODE======================================
+00001010  3C07                      19      MOVE D7,D6
+00001012                            20  * LS, AS, RO
+00001012  CC7C 00C0                 21      AND #192,D6
+00001016  EC4E                      22      LSR #6,D6
+00001018  BC7C 0001                 23      CMP #1,D6
+0000101C  6700 0034                 24      BEQ PRINTLS
+00001020  BC7C 0000                 25      CMP #0,D6
+00001024  6700 003A                 26      BEQ PRINTAS
+00001028  BC7C 0002                 27      CMP #2,D6
+0000102C  6700 0040                 28      BEQ PRINTRO
+00001030                            29      
+00001030  3C07                      30      MOVE D7,D6
+00001032                            31  * left or right
+00001032                            32  LRDefine 
+00001032  3C07                      33      MOVE D7,D6
+00001034  CC7C 0100                 34      AND #256,D6
+00001038  BC7C 0000                 35      CMP #0,D6
+0000103C  6700 004C                 36      BEQ PRINTR
+00001040  6000 003A                 37      BRA PRINTL
+00001044                            38  
+00001044                            39  * Number
+00001044  3C07                      40  DefineNUM    MOVE D7,D6
+00001046  CC78 01E8                 41      AND 488,D6
+0000104A  E04E                      42      LSR #8,D6
+0000104C  3206                      43      MOVE D6,D1
+0000104E  6000 0048                 44      BRA ENDOFLR
+00001052                            45      
+00001052  43F9 0000109E             46  PRINTLS LEA     LS,A1
+00001058  103C 000E                 47      MOVE.B  #14,D0
+0000105C  4E4F                      48      TRAP    #15
+0000105E  60D2                      49      BRA LRDefine
+00001060  43F9 000010A1             50  PRINTAS LEA     AS,A1
+00001066  103C 000E                 51      MOVE.B  #14,D0
+0000106A  4E4F                      52      TRAP    #15
+0000106C  60C4                      53      BRA LRDefine
+0000106E  43F9 000010A4             54  PRINTRO LEA     RO,A1
+00001074  103C 000E                 55      MOVE.B  #14,D0
+00001078  4E4F                      56      TRAP    #15
+0000107A  60B6                      57      BRA LRDefine
+0000107C  43F9 000010A7             58  PRINTL LEA     L,A1
+00001082  103C 000E                 59      MOVE.B  #14,D0
+00001086  4E4F                      60      TRAP    #15
+00001088  60BA                      61      BRA DefineNUM
+0000108A  43F9 000010A9             62  PRINTR LEA     R,A1
+00001090  103C 000E                 63      MOVE.B  #14,D0
+00001094  4E4F                      64      TRAP    #15
+00001096  60AC                      65      BRA DefineNUM
+00001098  3A06                      66  ENDOFLR MOVE D6,D5
+0000109A  FFFF FFFF                 67      SIMHALT             ; halt simulator
+0000109E                            68  
+0000109E                            69  * Put variables and constants here
+0000109E= 4C 53 00                  70  LS DC.B    'LS',0
+000010A1= 41 53 00                  71  AS DC.B    'AS',0
+000010A4= 52 4F 00                  72  RO DC.B    'RO',0
+000010A7= 4C 00                     73  L DC.B    'L',0
+000010A9= 52 00                     74  R DC.B    'R',0
+000010AB                            75  
+000010AB                            76      END    START        ; last line of source
+
+No errors detected
+No warnings generated
+
+
+SYMBOL TABLE INFORMATION
+Symbol-name         Value
+-------------------------
+AS                  10A1
+DEFINENUM           1044
+ENDOFLR             1098
+L                   10A7
+LRDEFINE            1032
+LS                  109E
+PRINTAS             1060
+PRINTL              107C
+PRINTLS             1052
+PRINTR              108A
+PRINTRO             106E
+R                   10A9
+RO                  10A4
+START               1000
