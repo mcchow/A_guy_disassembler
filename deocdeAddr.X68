@@ -13,7 +13,7 @@ START:                  ; first instruction of program
     TRAP    #15
 * Assuming address is in D1
     
-DeAddr  MOVE.L D1,D3
+DeAddr  MOVE.L D7,D3
         AND #63,D3
 * decode MODE
         MOVE    D3,D4
@@ -100,28 +100,38 @@ TEMPADDR    AND #7,D3
     BRA IMMEADDR
     BRA EndDeAddr
     
-WORDADDR MOVE.B  #4,D0 ; assuming getting data from next line
+WORDADDR MOVE A1,D3
+    ADD #$4,A1 
+    *MOVE.B  #4,D0 ; assuming getting data from next line
+    *TRAP    #15
+    MOVE.W  D3,D1
+    MOVE.B  #3,D0
     TRAP    #15
-    JSR PRINTDIGI
     BRA EndDeAddr
     
-LONGADDR    MOVE.B  #4,D0 ; assuming getting data from next line
+LONGADDR    MOVE A1,D3
+    ADD #$4,A1 
+*MOVE.B  #4,D0 ; assuming getting data from next line
+*    TRAP    #15
+    MOVE.W  D3,D1
+    MOVE.B  #3,D0
     TRAP    #15
-    JSR PRINTDIGI
     BRA EndDeAddr
     
 IMMEADDR    LEA     NumSign,A1
         MOVE.B  #14,D0
         TRAP    #15
-    MOVE.B  #4,D0 ; assuming getting data from next line
+    MOVE A1,D3
+    ADD #$4,A1
+    MOVE.W  D3,D1
+    MOVE.B  #3,D0
     TRAP    #15
-    JSR PRINTDIGI
     BRA EndDeAddr
 
 
 
 
-EndDeAddr   MOVE D1,D0 
+EndDeAddr   MOVE D7,D1 
     SIMHALT             ; halt simulator
    
 
@@ -141,6 +151,8 @@ NEXTLINE DC.B CR,LF,0
 
     END    START        ; last line of source
     
+
+
 
 *~Font name~Courier New~
 *~Font size~10~

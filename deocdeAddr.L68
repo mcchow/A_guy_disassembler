@@ -1,6 +1,6 @@
 00001000 Starting Address
 Assembler used: EASy68K Editor/Assembler v5.16.01
-Created On: 22/11/2020 3:01:38 pm
+Created On: 29/11/2020 4:54:16 pm
 
 00000000                             1  *-----------------------------------------------------------
 00000000                             2  * Title      :
@@ -17,7 +17,7 @@ Created On: 22/11/2020 3:01:38 pm
 00001004  4E4F                      13      TRAP    #15
 00001006                            14  * Assuming address is in D1
 00001006                            15      
-00001006  2601                      16  DeAddr  MOVE.L D1,D3
+00001006  2607                      16  DeAddr  MOVE.L D7,D3
 00001008  C67C 003F                 17          AND #63,D3
 0000100C                            18  * decode MODE
 0000100C  3803                      19          MOVE    D3,D4
@@ -34,19 +34,19 @@ Created On: 22/11/2020 3:01:38 pm
 00001034  6700 0094                 30          BEQ DIRADDRN
 00001038  B87C 0007                 31          CMP #7,D4
 0000103C  6700 00B8                 32          BEQ TEMPADDR
-00001040  6000 010A                 33          BRA EndDeAddr ;JUST INCASE
+00001040  6000 0108                 33          BRA EndDeAddr ;JUST INCASE
 00001044                            34          
 00001044                            35  *SECTION FOR D# AND A#
-00001044  43F9 00001152             36  REGISTERD    LEA     D,A1
+00001044  43F9 00001150             36  REGISTERD    LEA     D,A1
 0000104A  103C 000E                 37          MOVE.B  #14,D0
 0000104E  4E4F                      38          TRAP    #15
 00001050  4EB9 00001070             39          JSR PRINTDIGI
-00001056  6000 00F4                 40          BRA EndDeAddr
-0000105A  43F9 00001154             41  REGISTERA  LEA     A,A1
+00001056  6000 00F2                 40          BRA EndDeAddr
+0000105A  43F9 00001152             41  REGISTERA  LEA     A,A1
 00001060  103C 000E                 42          MOVE.B  #14,D0
 00001064  4E4F                      43          TRAP    #15
 00001066  4EB9 00001070             44          JSR PRINTDIGI
-0000106C  6000 00DE                 45          BRA EndDeAddr
+0000106C  6000 00DC                 45          BRA EndDeAddr
 00001070                            46           
 00001070                            47           
 00001070                            48  *PRINT REGISTER#
@@ -58,40 +58,40 @@ Created On: 22/11/2020 3:01:38 pm
 0000107E                            54      
 0000107E                            55      
 0000107E                            56  *DIRECT ADDRESS (A#)
-0000107E  43F9 0000115A             57  DIRADDR LEA     ABra,A1
+0000107E  43F9 00001158             57  DIRADDR LEA     ABra,A1
 00001084  103C 000E                 58          MOVE.B  #14,D0
 00001088  4E4F                      59          TRAP    #15
 0000108A  4EB8 1070                 60      JSR PRINTDIGI
-0000108E  43F9 0000115D             61      LEA     CloBra,A1
+0000108E  43F9 0000115B             61      LEA     CloBra,A1
 00001094  103C 000E                 62      MOVE.B  #14,D0
 00001098  4E4F                      63      TRAP    #15
-0000109A  6000 00B0                 64      BRA EndDeAddr
+0000109A  6000 00AE                 64      BRA EndDeAddr
 0000109E                            65      
 0000109E                            66  *DIRECT ADDRESS (A#)+
-0000109E  43F9 0000115A             67  DIRADDRP LEA     ABra,A1
+0000109E  43F9 00001158             67  DIRADDRP LEA     ABra,A1
 000010A4  103C 000E                 68          MOVE.B  #14,D0
 000010A8  4E4F                      69          TRAP    #15
 000010AA  4EB8 1070                 70      JSR PRINTDIGI
-000010AE  43F9 0000115D             71      LEA     CloBra,A1
+000010AE  43F9 0000115B             71      LEA     CloBra,A1
 000010B4  103C 000E                 72      MOVE.B  #14,D0
 000010B8  4E4F                      73      TRAP    #15
-000010BA  43F9 0000115F             74      LEA     PlusSign,A1
+000010BA  43F9 0000115D             74      LEA     PlusSign,A1
 000010C0  103C 000E                 75      MOVE.B  #14,D0
 000010C4  4E4F                      76      TRAP    #15
-000010C6  6000 0084                 77      BRA EndDeAddr
+000010C6  6000 0082                 77      BRA EndDeAddr
 000010CA                            78      
 000010CA                            79  *DIRECT ADDRESS -(A#)
-000010CA  43F9 00001161             80  DIRADDRN LEA     NegSign,A1
+000010CA  43F9 0000115F             80  DIRADDRN LEA     NegSign,A1
 000010D0  103C 000E                 81          MOVE.B  #14,D0
 000010D4  4E4F                      82          TRAP    #15
-000010D6  43F9 0000115A             83      LEA     ABra,A1
+000010D6  43F9 00001158             83      LEA     ABra,A1
 000010DC  103C 000E                 84      MOVE.B  #14,D0
 000010E0  4E4F                      85      TRAP    #15
 000010E2  4EB8 1070                 86      JSR PRINTDIGI
-000010E6  43F9 0000115D             87      LEA     CloBra,A1
+000010E6  43F9 0000115B             87      LEA     CloBra,A1
 000010EC  103C 000E                 88      MOVE.B  #14,D0
 000010F0  4E4F                      89      TRAP    #15
-000010F2  6000 0058                 90      BRA EndDeAddr
+000010F2  6000 0056                 90      BRA EndDeAddr
 000010F6                            91      
 000010F6                            92      
 000010F6                            93  *TEMPADDR # OR L OR W
@@ -99,51 +99,53 @@ Created On: 22/11/2020 3:01:38 pm
 000010FA  B67C 0000                 95      CMP #0,D3
 000010FE  6000 0016                 96      BRA WORDADDR
 00001102  B67C 0001                 97      CMP #1,D3
-00001106  6000 001C                 98      BRA LONGADDR
+00001106  6000 001A                 98      BRA LONGADDR
 0000110A  B67C 0004                 99      CMP #4,D3
-0000110E  6000 0022                100      BRA IMMEADDR
-00001112  6000 0038                101      BRA EndDeAddr
+0000110E  6000 0020                100      BRA IMMEADDR
+00001112  6000 0036                101      BRA EndDeAddr
 00001116                           102      
-00001116  103C 0004                103  WORDADDR MOVE.B  #4,D0 ; assuming getting data from next line
-0000111A  4E4F                     104      TRAP    #15
-0000111C  4EB8 1070                105      JSR PRINTDIGI
-00001120  6000 002A                106      BRA EndDeAddr
-00001124                           107      
-00001124  103C 0004                108  LONGADDR    MOVE.B  #4,D0 ; assuming getting data from next line
-00001128  4E4F                     109      TRAP    #15
-0000112A  4EB8 1070                110      JSR PRINTDIGI
-0000112E  6000 001C                111      BRA EndDeAddr
-00001132                           112      
-00001132  43F9 00001158            113  IMMEADDR    LEA     NumSign,A1
-00001138  103C 000E                114          MOVE.B  #14,D0
-0000113C  4E4F                     115          TRAP    #15
-0000113E  103C 0004                116      MOVE.B  #4,D0 ; assuming getting data from next line
-00001142  4E4F                     117      TRAP    #15
-00001144  4EB8 1070                118      JSR PRINTDIGI
-00001148  6000 0002                119      BRA EndDeAddr
-0000114C                           120  
-0000114C                           121  
-0000114C                           122  
-0000114C                           123  
-0000114C  3001                     124  EndDeAddr   MOVE D1,D0 
-0000114E  FFFF FFFF                125      SIMHALT             ; halt simulator
-00001152                           126     
-00001152                           127  
-00001152                           128  * Put variables and constants here
-00001152  =0000000D                129  CR      EQU     $0D
-00001152  =0000000A                130  LF      EQU     $0A
-00001152= 44 00                    131  D DC.B    'D',0
-00001154= 41 00                    132  A DC.B    'A',0
-00001156= 28 00                    133  Bra DC.B   '(',0
-00001158= 23 00                    134  NumSign DC.B '#',0
-0000115A= 28 41 00                 135  ABra DC.B   '(A',0
-0000115D= 29 00                    136  CloBra DC.B ')',0
-0000115F= 2B 00                    137  PlusSign DC.B '+',0
-00001161= 2D 00                    138  NegSign DC.B '-',0
-00001163= 0D 0A 00                 139  NEXTLINE DC.B CR,LF,0
-00001166                           140  
-00001166                           141  
-00001166                           142      END    START        ; last line of source
+00001116  3209                     103  WORDADDR MOVE A1,D1
+00001118  5849                     104      ADD #$4,A1 
+0000111A                           105      *MOVE.B  #4,D0 ; assuming getting data from next line
+0000111A                           106      *TRAP    #15
+0000111A  4EB8 1070                107      JSR PRINTDIGI
+0000111E  6000 002A                108      BRA EndDeAddr
+00001122                           109      
+00001122  103C 0004                110  LONGADDR    MOVE.B  #4,D0 ; assuming getting data from next line
+00001126  4E4F                     111      TRAP    #15
+00001128  4EB8 1070                112      JSR PRINTDIGI
+0000112C  6000 001C                113      BRA EndDeAddr
+00001130                           114      
+00001130  43F9 00001156            115  IMMEADDR    LEA     NumSign,A1
+00001136  103C 000E                116          MOVE.B  #14,D0
+0000113A  4E4F                     117          TRAP    #15
+0000113C  103C 0004                118      MOVE.B  #4,D0 ; assuming getting data from next line
+00001140  4E4F                     119      TRAP    #15
+00001142  4EB8 1070                120      JSR PRINTDIGI
+00001146  6000 0002                121      BRA EndDeAddr
+0000114A                           122  
+0000114A                           123  
+0000114A                           124  
+0000114A                           125  
+0000114A  3207                     126  EndDeAddr   MOVE D7,D1 
+0000114C  FFFF FFFF                127      SIMHALT             ; halt simulator
+00001150                           128     
+00001150                           129  
+00001150                           130  * Put variables and constants here
+00001150  =0000000D                131  CR      EQU     $0D
+00001150  =0000000A                132  LF      EQU     $0A
+00001150= 44 00                    133  D DC.B    'D',0
+00001152= 41 00                    134  A DC.B    'A',0
+00001154= 28 00                    135  Bra DC.B   '(',0
+00001156= 23 00                    136  NumSign DC.B '#',0
+00001158= 28 41 00                 137  ABra DC.B   '(A',0
+0000115B= 29 00                    138  CloBra DC.B ')',0
+0000115D= 2B 00                    139  PlusSign DC.B '+',0
+0000115F= 2D 00                    140  NegSign DC.B '-',0
+00001161= 0D 0A 00                 141  NEXTLINE DC.B CR,LF,0
+00001164                           142  
+00001164                           143  
+00001164                           144      END    START        ; last line of source
 
 No errors detected
 No warnings generated
@@ -152,24 +154,24 @@ No warnings generated
 SYMBOL TABLE INFORMATION
 Symbol-name         Value
 -------------------------
-A                   1154
-ABRA                115A
-BRA                 1156
-CLOBRA              115D
+A                   1152
+ABRA                1158
+BRA                 1154
+CLOBRA              115B
 CR                  D
-D                   1152
+D                   1150
 DEADDR              1006
 DIRADDR             107E
 DIRADDRN            10CA
 DIRADDRP            109E
-ENDDEADDR           114C
-IMMEADDR            1132
+ENDDEADDR           114A
+IMMEADDR            1130
 LF                  A
-LONGADDR            1124
-NEGSIGN             1161
-NEXTLINE            1163
-NUMSIGN             1158
-PLUSSIGN            115F
+LONGADDR            1122
+NEGSIGN             115F
+NEXTLINE            1161
+NUMSIGN             1156
+PLUSSIGN            115D
 PRINTDIGI           1070
 REGISTERA           105A
 REGISTERD           1044
