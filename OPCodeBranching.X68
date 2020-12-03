@@ -155,6 +155,29 @@ ONEONE
     CMP.B   #$2,D6
     BEQ     ONEONE_SHIFT_SUBROUTINE ;MARTIN'S WORKING ON THIS
 
+*++++++++++++++++++++++++++++++++++NOP & RTS+++++++++++++++++++
+*--------------------------------------------
+*PROCESS OUTPUT FOR NOP
+*D7 = ORIGINAL WORD OF MEMORY 
+PROCESS_NOP
+*----I/O NOP----
+    LEA     MESSAGE_NOP,A1
+    MOVE.B  #14,D0
+    TRAP    #15
+    
+    JMP     PRIMELOOP 
+    
+*--------------------------------------------
+*PROCESS OUTPUT FOR NOP
+*D7 = ORIGINAL WORD OF MEMORY 
+PROCESS_RTS
+*----I/O RTS----
+    LEA     MESSAGE_RTS,A1
+    MOVE.B  #14,D0
+    TRAP    #15
+    
+    JMP     PRIMELOOP 
+    
 *++++++++++++++++++++++++++++++++++MOVE, MOVEA, MOVEQ, MOVEM+++++++++++++++++++
 *--------------------------------------------
 *PROCESS OUTPUT FOR MOVEA
@@ -203,6 +226,7 @@ PROCESS_MOVE
 *PROCESS OUTPUT FOR MOVEQ
 *D7 = ORIGINAL WORD OF MEMORY 
 PROCESS_MOVEQ
+    JMP     CHECK_AND_OR_MOVEQ_EA       ;CHECK IF EA IS VALID
 *----I/O MOVEQ----
     LEA     MESSAGE_MOVEQ,A1
     MOVE.B  #14,D0
@@ -252,117 +276,7 @@ PROCESS_MOVEQ
     
     BRA     PRIMELOOP 
     
-*--------------------------------------------
-*PROCESS OUTPUT FOR MOVEQ
-*D7 = ORIGINAL WORD OF MEMORY 
-PROCESS_MOVEM
-*----I/O MOVEM----
-    LEA     MESSAGE_MOVEM,A1
-    MOVE.B  #14,D0
-    TRAP    #15
-    
-*----CHECK SIZE----
-    MOVE.W  D7,D6
-    AND.W   #$0040,D6
-    LSR.B   #6,D6
-    
-    CMP.B   #0,D6
-    BEQ     PRINT_MOVEM_WORD
-    
-    CMP.B   #1,D6
-    BEQ     PRINT_MOVEM_LONG
 
-*--------------------------------------------
-*PROCESS OUTPUT FOR MOVEM WORD
-*D7 = ORIGINAL WORD OF MEMORY 
-PRINT_MOVEM_WORD
-*----I/O WORD----
-    LEA     MESSAGE_WORD,A1
-    MOVE.B  #14,D0
-    TRAP    #15
-    
-    BRA     PRINT_MOVEM_DIRECTION
-    
-*--------------------------------------------
-*PROCESS OUTPUT FOR MOVEM LONG
-*D7 = ORIGINAL WORD OF MEMORY 
-PRINT_MOVEM_LONG
-*----I/O WORD----
-    LEA     MESSAGE_LONG,A1
-    MOVE.B  #14,D0
-    TRAP    #15
-    
-    BRA     PRINT_MOVEM_DIRECTION
-    
-*--------------------------------------------
-*PROCESS OUTPUT FOR MOVEM DIRECTION
-*D7 = ORIGINAL WORD OF MEMORY 
-PRINT_MOVEM_DIRECTION
-*----CHECK IF REG TO MEM OR MEM TO REG----
-    MOVE.W  D7,D6
-    AND.W   #$0400,D6
-    ROL.W   #6,D6
-    
-    CMP.B   #0,D6
-    BEQ     PRINT_MOVEM_REGTOMEM
-    
-    CMP.B   #1,D6
-    BEQ     PRINT_MOVEM_MEMTOREG
-    
-*--------------------------------------------
-*PROCESS OUTPUT FOR MOVEM REGISTARS TO MEMORY
-*D7 = ORIGINAL WORD OF MEMORY 
-PRINT_MOVEM_REGTOMEM
-*----I/O DATA REG----
-    *//TODO
-    
-*----COMMA----
-    LEA     MESSAGE_COMMA,A1
-    MOVE.B  #14,D0
-    TRAP    #15
-    
-*----I/O EA----
-    MOVE.W  D7,D6
-    AND.W   #$003F,D6
-    MOVEM.W D7/A5/A6,-(SP)
-    JMP     DeAddr              ;PRINT EA
-    
-    MOVEM.W (SP)+,D7/A5/A6
-    
-*----NEW LINE----
-    LEA     newline,A1
-    MOVE.B  #14,D0
-    TRAP    #15
-    
-    BRA     PRIMELOOP
-    
-*--------------------------------------------
-*PROCESS OUTPUT FOR MOVEM MEMORY TO REGISTARS
-*D7 = ORIGINAL WORD OF MEMORY 
-PRINT_MOVEM_MEMTOREG
-*----I/O EA----
-    MOVE.W  D7,D6
-    AND.W   #$003F,D6
-    MOVEM.W D7/A5/A6,-(SP)
-    JMP     DeAddr              ;PRINT EA
-    
-    MOVEM.W +(SP),D7/A5/A6
-
-*----COMMA----
-    LEA     MESSAGE_COMMA,A1
-    MOVE.B  #14,D0
-    TRAP    #15
-    
-*----I/O DATA REG----
-    *//TODO
-    
-*----NEW LINE----
-    LEA     newline,A1
-    MOVE.B  #14,D0
-    TRAP    #15
-    
-    BRA     PRIMELOOP
-    
 *--------------------------------------------
 *PROCESS OUTPUT FOR MOVE & MOVEA BYTE
 *D7 = ORIGINAL WORD OF MEMORY 
@@ -435,6 +349,8 @@ PRINT_MOVE_EA
 *PROCESS OUTPUT FOR LEA
 *D7 = ORIGINAL WORD OF MEMORY 
 PROCESS_LEA
+    JMP     CHECK_LEA_JSR_EA
+    
 *----I/O LEA----
     LEA     MESSAGE_LEA,A1
     MOVE.B  #14,D0
@@ -473,11 +389,43 @@ PROCESS_LEA
     
     BRA     PRIMELOOP
 
+*--------------------------------------------
+*CHECK IF LEA & JSR ea IS VALID
+*D7 = ORIGINAL WORD OF MEMORY
+CHECK_LEA_JSR_EA
+*----CHECK INVALID EA----
+    MOVE.W  D7,D6
+    AND.W   #$0038,D6
+    LSR.B   #$3,D6
+    
+    CMP.B   #$2,D6          ;IF Dn OR An
+    BLT     PRINT_DATA
+    
+    CMP.B   #$3,D6          ;IF (An)+
+    BEQ     PRINT_DATA
+    
+    CMP.B   #$4,D6          ;IF -(An)
+    BEQ     PRINT_DATA
+    
+    CMP.B   #$7,D6          ;IF EA MODE == #7
+    BEQ     CHECK_LEA_EA  
+*--------------------------------------------
+*CHECK IF LEA ea IS VALID WHEN MODE == %111
+*D7 = ORIGINAL WORD OF MEMORY 
+CHECK_LEA_EA
+    MOVE.W  D7,D6
+    AND.W   #$0007,D6
+    
+    CMP.B   #$4,D6
+    BEQ     PRINT_DATA
+    
+    RTS
 *++++++++++++++++++++++++++++++++++JSR+++++++++++++++++++
 *--------------------------------------------
 *PROCESS OUTPUT FOR JSR
 *D7 = ORIGINAL WORD OF MEMORY 
 PROCESS_JSR
+    JMP     CHECK_LEA_JSR_EA        ;CHECK THAT EA IS VALID
 *----I/O JSR----
     LEA     MESSAGE_JSR,A1
     MOVE.B  #14,D0
@@ -503,6 +451,17 @@ PROCESS_JSR
 *PROCESS OUTPUT FOR NOT
 *D7 = ORIGINAL WORD OF MEMORY 
 PROCESS_NOT
+*----CHECK THAT ea IS VALID ----
+    MOVE.W  D7,D6
+    AND.W   #$0038,D6
+    LSR.B   #$3,D6
+    
+    CMP.B   #$1,D6
+    BEQ     PRINT_DATA
+    
+    CMP.B   #$7,D6
+    BEQ     CHECK_NOT_EA
+    
 *----I/O NOT----
     LEA     MESSAGE_NOT,A1
     MOVE.B  #14,D0
@@ -524,6 +483,18 @@ PROCESS_NOT
 *----CHECK FOR LONG----
     CMP.B   #$2,D6
     BEQ     PRINT_NOT_LONG
+    
+*--------------------------------------------
+*CHECK REGISTER IS VALID WHEN EA MODE == %111
+*D7 = ORIGINAL WORD OF MEMORY 
+CHECK_NOT_EA
+    MOVE.W  D7,D6
+    AND.W   #$0007,D6
+    
+    CMP.B   #$1,D6
+    BGT     PRINT_DATA
+    
+    RTS
     
 *--------------------------------------------
 *PROCESS OUTPUT FOR NOT BYTE & EA
@@ -602,6 +573,8 @@ PRINT_NOT_LONG
 *PROCESS OUTPUT FOR AND
 *D7 = ORIGINAL WORD OF MEMORY 
 PROCESS_AND
+    JMP     CHECK_AND_OR_MOVEQ_EA     ;FUNCTION CHECKS IF EA IS VALID
+    
 *----I/O AND----
     LEA     MESSAGE_AND,A1
     MOVE.B  #14,D0
@@ -609,11 +582,25 @@ PROCESS_AND
     
     BRA     PRINT_OPMODE
     
+*--------------------------------------------
+*CHECK AND, OR, & MOVEQ ea TO ENSURE IT IS VALID
+*D7 = ORIGINAL WORD OF MEMORY
+CHECK_AND_OR_MOVEQ_EA
+*----CHECK ea VALID----
+    MOVE.W  D7,D6
+    AND.W   #$0038,D6
+    LSR.W   #$3,D6
+    
+    CMP.B   #$1,D6          ;IF EA MODE == An
+    BEQ     PRINT_DATA
+    RTS
+    
 *++++++++++++++++++++++++++++++++++OR+++++++++++++++++++
 *--------------------------------------------
 *PROCESS OUTPUT FOR OR
 *D7 = ORIGINAL WORD OF MEMORY 
 PROCESS_OR
+    JMP     CHECK_AND_OR_MOVEQ_EA     ;FUNCITON CHECKS IF EA IS VALID
 *----I/O OR----
     LEA     MESSAGE_OR,A1
     MOVE.B  #14,D0
@@ -662,9 +649,10 @@ PROCESS_ADDA
     LEA     MESSAGE_ADDA,A1
     MOVE.B  #14,D0
     TRAP #15
-    
+     
 *----SETUP FOR SIZE COMPARE----
     MOVE.W  D7,D6
+    AND.W   #$01C0,D6
     LSR.W   #$6,D6
     
 *----COMPARE FOR OPMODE----
@@ -760,30 +748,78 @@ PROCESS_ADDA_LONG
 *PROCESS PRINT FOR ADD
 *D7=ORIGINAL
 PROCESS_ADD
+    JMP     CHECK_ADD_ERROR
+    
 *----I/O ADD----
     LEA     MESSAGE_ADD,A1
     MOVE.B  #14,D0
     TRAP    #15
     
-    JMP     CHECK_ADD_ERROR
+
     
     BRA     PRINT_OPMODE
 
 *--------------------------------------------
-*PROCESS PRINT FOR ADDQ 
+*CHECK IF EA IS CORRECT FOR ADD
 *D7=ORIGINAL
 CHECK_ADD_ERROR
     MOVE.W  D7,D6
-    AND.W   
+    AND.W   #$01CO,D6
+    LSR.W   #6,D6
+
+*----CHECK IF OPMODE = 4, 5, OR 6----
+    CMP.B   #$4,D6
+    BGE     CHECK_ADD_EA    
+    
+    RTS                         ;RETURN TO PROCESS_ADD
+    
+*--------------------------------------------
+*IF OPMODE SHOWS ADD Dn,<ea>, CHECK DESTINATION IS VALID 
+*D7=ORIGINAL
+CHECK_ADD_EA
+    MOVE.W  D7,D6
+    AND.W   #$0031,D6
+    LSR.W   #$3,D6
+
+*----CHECK FOR Dn & An----
+    CMP.B   #$1,D6
+    BLE     PRINT_DATA
+    
+*----CHECK FOR MODE 111----
+    CMP.B   #$7,D6
+    BEQ     CHECK_ADD_ERROR_EA_REGISTER
+    
+    RTS    
+
+*--------------------------------------------
+*CHECK IF ea OPMODE OF 111 IS VALID
+*D7=ORIGINAL
+CHECK_ADD_ERROR_EA_REGISTER
+    MOVE.W  D7,D6
+    AND.W   #$0007,D6
+    
+    CMP.B   #$1,D6
+    BGT     PRINT_DATA
+    
+    RTS
 *--------------------------------------------
 *PROCESS PRINT FOR ADDQ 
 *D7=ORIGINAL
 PROCESS_ADDQ
+*----CHECK FOR OPMODE ERROR----
+    MOVE.W  D7,D6
+    AND.W   #$0038,D6
+    LSR.B   #$3,D6
+    
+    CMP.B   #$7,D6
+    BEQ     CHECK_ADD_ERROR_EA_REGISTER
+
 *----I/O ADDQ----
     LEA     MESSAGE_ADDQ,A1
     MOVE.B  #14,D0
     TRAP    #15
     
+
 *----COMPARE FOR SIZE----
     MOVE.W  D7,D6
     AND.W   #$00C0,D6
@@ -1278,8 +1314,10 @@ DISPLACEMENT_BCC
 *PRINT 16 BIT DISPLACEMENT
 *D7=ORIGINAL  
 PRINT_16BIT
-    *I/O CODE
-    *DISPLACEMENT = NEXT WORD FROM A5
+    MOVE.W  (A5)+,D1
+    MOVE.B  #15,D0
+    MOVE.B  #16,D2
+    TRAP    #15
 *----NEW LINE----
     LEA     newline,A1
     MOVE.B  #14,D0
@@ -1291,8 +1329,11 @@ PRINT_16BIT
 *PRINT 32 BIT DISPLACEMENT
 *D7=ORIGINAL
 PRINT_32BIT
-    *I/O CODE
-    *DISPLACEMENT = NEXT LONG FROM A5
+    MOVE.L  (A5)+,D1
+    MOVE.B  #15,D0
+    MOVE.B  #16,D2
+    TRAP    #15
+    
 *----NEW LINE----
     LEA     newline,A1
     MOVE.B  #14,D0
@@ -1304,8 +1345,11 @@ PRINT_32BIT
 *PRINT 8 BIT DISPLACEMENT
 *D7=ORIGINAL
 PRINT_8BIT
-    *I/O CODE
-    *DISPLACEMENT IN D6 OR LAST 8 BITS OF D7
+    MOVE.B  D7,D1
+    MOVE.B  #15,D0
+    MOVE.B  #16,D2
+    TRAP    #15
+    
 *----NEW LINE----
     LEA     newline,A1
     MOVE.B  #14,D0
@@ -1333,6 +1377,8 @@ MESSAGE_MOVE        DC.B    'MOVE',0
 MESSAGE_MOVEQ       DC.B    'MOVEQ',0
 MESSAGE_MOVEA       DC.B    'MOVEA',0
 MESSAGE_MOVEM       DC.B    'MOVEM',0
+MESSAGE_NOP         DC.B    'NOP',CR,LF,0
+MESSAGE_RTS         DC.B    'RTS',CR,LF,0
 
 MESSAGE_BRA       DC.B    'BRA',0
 MESSAGE_BHI       DC.B    'BHI',0
