@@ -6,6 +6,7 @@
 * mesh is a 16 bit data that indicate the D# and A# need to store
 * there are two way , read and store is decode
 * this function is taking D6 as input mesh and print the D# and A# as output
+* D4 is the read and write(read = 0, write =1)
 *-----------------------------------------------------------
     ORG    $1000
 START:                  ; first instruction of program
@@ -48,24 +49,26 @@ NextD   CMP #8,D1
     MOVE D6,D5
 * DETERMINE DIRECTION(READ OR WRITE TO M)
     CMP #0,D4
-    BEQ FNIN
-    BRA FNRE
+    BEQ NDIN
+    BRA NDRE
 NDIN    AND #1,D5
     LSR #1,D6
-    BRA ENDFNIN
+    BRA ENDNDIN
 NDRE    AND #32768,D5
     LSL #1,D6
     
-ENDFDIN BEQ NEXTDADDONE
+ENDNDIN CMP #0,D5
+    BEQ NEXTDADDONE
     JSR PRINTSLASHMM
     JSR PRINTDMM
     JSR PRINTDIGIMM
 NEXTDADDONE    ADD #1,D1    
     BRA NEXTD
 
+*======================================================================
 
-*PRINT SLASH AS THERE IS D#
-FirstASTSL JSR PRINTSLASHMM
+*SET PRINT SLASH FLAG TO 1 AS THERE IS D#
+FirstASTSL MOVE #1,D2
 * PRINT FIRST A#
 FirstAST MOVE #0,D1
 
@@ -83,8 +86,13 @@ FAIN    AND #1,D5
 FARE    AND #32768,D5
     LSL #1,D6
     
-ENDFAIN   BEQ FirstAADDONE
-    JSR PRINTAMM
+ENDFAIN   CMP #0,D5
+    BEQ FirstAADDONE
+
+    CMP #0,D2
+    BEQ noslash
+    JSR PRINTSLASHMM
+noslash    JSR PRINTAMM
     JSR PRINTDIGIMM
     BRA NextAST
 FirstAADDONE    ADD #1,D1
@@ -92,23 +100,25 @@ FirstAADDONE    ADD #1,D1
 
 NextAST ADD #1,D1
 NextA   CMP #8,D1
-    BEQ FirstASTSL
-    MOVE D6,D5* DETERMINE DIRECTION(READ OR WRITE TO M)
+    BEQ MESHEND
+    MOVE D6,D5
+* DETERMINE DIRECTION(READ OR WRITE TO M)
     CMP #0,D4
-    BEQ FDIN
-    BRA FDRE
-FDIN    AND #1,D5
+    BEQ NAIN
+    BRA NARE
+NAIN    AND #1,D5
     LSR #1,D6
-    BRA ENDFDIN
-FDRE    AND #32768,D5
+    BRA ENDNAIN
+NARE    AND #32768,D5
     LSL #1,D6
     
-ENDFDIN BEQ NEXTDADDONE
+ENDNAIN    CMP #0,D5
+    BEQ NEXTAADDONE
     JSR PRINTSLASHMM
-    JSR PRINTDMM
+    JSR PRINTAMM
     JSR PRINTDIGIMM
-NEXTDADDONE    ADD #1,D1    
-    BRA NEXTD
+NEXTAADDONE    ADD #1,D1    
+    BRA NEXTA
 
 MESHEND MOVE D0,D0
     
