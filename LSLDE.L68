@@ -1,6 +1,6 @@
 00001000 Starting Address
 Assembler used: EASy68K Editor/Assembler v5.16.01
-Created On: 25/11/2020 9:49:48 pm
+Created On: 3/12/2020 8:29:50 pm
 
 00000000                             1  *-----------------------------------------------------------
 00000000                             2  * Title      :
@@ -14,122 +14,122 @@ Created On: 25/11/2020 9:49:48 pm
 00001000                            10  * Put program code here
 00001000  E408                      11      lsR.b     #$02,d0
 00001002  E94A                      12      lsl.w     #$04,d2
-00001004  E3F9 00FF0000             13      lsl.w     $00FF0000
-0000100A                            14  *TEST only , getting input
-0000100A  103C 0004                 15      MOVE.B  #4,D0
-0000100E  4E4F                      16      TRAP    #15
-00001010  3E01                      17      MOVE D1,D7
-00001012                            18  *REAL CODE======================================
-00001012  3C07                      19      MOVE D7,D6
-00001014                            20  * LS, AS, RO
-00001014  CC7C 0018                 21      AND #24,D6
-00001018  E64E                      22      LSR #3,D6
-0000101A  BC7C 0001                 23      CMP #1,D6
-0000101E  6700 0078                 24      BEQ PRINTLS
-00001022  BC7C 0000                 25      CMP #0,D6
-00001026  6700 007E                 26      BEQ PRINTAS
-0000102A  BC7C 0002                 27      CMP #2,D6
-0000102E  6700 0086                 28      BEQ PRINTRO
-00001032                            29      
-00001032                            30  * left or right
-00001032  3C07                      31  LRDefine MOVE D7,D6
-00001034  CC7C 0100                 32      AND #256,D6
-00001038  BC7C 0000                 33      CMP #0,D6
-0000103C  6700 0098                 34      BEQ PRINTR
-00001040  6000 0084                 35      BRA PRINTL
-00001044                            36  
-00001044                            37  * size
-00001044  3C07                      38  DefineSIZE    MOVE D7,D6
-00001046  CC7C 00C0                 39      AND #192,D6
-0000104A  EC4E                      40      LSR #6,D6
-0000104C  BC7C 0000                 41      CMP #0,D6
-00001050  6700 0094                 42      BEQ PRINTSIZEB
-00001054  BC7C 0001                 43      CMP #1,D6
-00001058  6700 009C                 44      BEQ PRINTSIZEW
-0000105C                            45  
-0000105C                            46  *D# OR # IE: LSL.R (d# / #)
-0000105C  3C07                      47  DEFINENUM MOVE D7,D6
-0000105E  CC7C 0010                 48      AND #16,D6
-00001062  BC7C 0000                 49      CMP #0,D6
-00001066  6700 00B2                 50      BEQ PRINTNUM
-0000106A  3C07                      51      MOVE D7,D6
-0000106C  CC7C 0700                 52      AND #1792,D6
-00001070  E04E                      53      LSR #8,D6
-00001072  3206                      54      MOVE D6,D1
-00001074  4EB9 00001106             55      JSR PRINTDADDR
-0000107A                            56      
-0000107A                            57  *DISTINATION D#
-0000107A  3C07                      58  DEFINEDIS MOVE D7,D6
-0000107C  43F9 0000115B             59      LEA     COMMA,A1
-00001082  103C 000E                 60      MOVE.B  #14,D0
-00001086  4E4F                      61      TRAP    #15
-00001088  CC7C 0007                 62      AND #7,D6
-0000108C  3206                      63      MOVE    D6,D1
-0000108E  4EB9 00001106             64      JSR PRINTDADDR
-00001094  6000 00A6                 65      BRA ENDOFLR
-00001098                            66      
-00001098  43F9 00001142             67  PRINTLS LEA     LS,A1
-0000109E  103C 000E                 68      MOVE.B  #14,D0
-000010A2  4E4F                      69      TRAP    #15
-000010A4  608C                      70      BRA LRDefine
-000010A6  43F9 00001145             71  PRINTAS LEA     AS,A1
-000010AC  103C 000E                 72      MOVE.B  #14,D0
-000010B0  4E4F                      73      TRAP    #15
-000010B2  6000 FF7E                 74      BRA LRDefine
-000010B6  43F9 00001148             75  PRINTRO LEA     RO,A1
-000010BC  103C 000E                 76      MOVE.B  #14,D0
-000010C0  4E4F                      77      TRAP    #15
-000010C2  6000 FF6E                 78      BRA LRDefine
-000010C6  43F9 0000114B             79  PRINTL LEA     L,A1
-000010CC  103C 000E                 80      MOVE.B  #14,D0
-000010D0  4E4F                      81      TRAP    #15
-000010D2  6000 FF70                 82      BRA DefineSIZE
-000010D6  43F9 0000114D             83  PRINTR LEA     R,A1
-000010DC  103C 000E                 84      MOVE.B  #14,D0
-000010E0  4E4F                      85      TRAP    #15
-000010E2  6000 FF60                 86      BRA DefineSIZE
-000010E6  43F9 00001151             87  PRINTSIZEB LEA     SizeB,A1
-000010EC  103C 000E                 88      MOVE.B  #14,D0
-000010F0  4E4F                      89      TRAP    #15
-000010F2  6000 FF68                 90      BRA DEFINENUM
-000010F6  43F9 00001155             91  PRINTSIZEW LEA     SizeW,A1
-000010FC  103C 000E                 92      MOVE.B  #14,D0
-00001100  4E4F                      93      TRAP    #15
-00001102  6000 FF58                 94      BRA DEFINENUM
-00001106  43F9 0000114F             95  PRINTDADDR LEA D,A1
-0000110C  103C 000E                 96      MOVE.B  #14,D0
-00001110  4E4F                      97      TRAP    #15
-00001112  103C 0003                 98      MOVE.B  #3,D0
-00001116  4E4F                      99      TRAP    #15
-00001118  4E75                     100      RTS
-0000111A  43F9 00001159            101  PRINTNUM LEA NUM,A1
-00001120  103C 000E                102      MOVE.B  #14,D0
-00001124  4E4F                     103      TRAP    #15
-00001126  3C07                     104      MOVE D7,D6
-00001128  E04E                     105      LSR #8,D6
-0000112A  E24E                     106      LSR #1,D6
-0000112C  CC7C 0007                107      AND #7,D6
-00001130  3206                     108      MOVE    D6,D1
-00001132  103C 0003                109      MOVE.B  #3,D0
-00001136  4E4F                     110      TRAP    #15
-00001138  6000 FF40                111      BRA     DEFINEDIS
-0000113C                           112  
-0000113C  3A06                     113  ENDOFLR MOVE D6,D5
-0000113E  FFFF FFFF                114      SIMHALT             ; halt simulator
-00001142                           115  
-00001142                           116  * Put variables and constants here
-00001142= 4C 53 00                 117  LS DC.B    'LS',0
-00001145= 41 53 00                 118  AS DC.B    'AS',0
-00001148= 52 4F 00                 119  RO DC.B    'RO',0
-0000114B= 4C 00                    120  L DC.B    'L',0
-0000114D= 52 00                    121  R DC.B    'R',0
-0000114F= 44 00                    122  D DC.B    'D',0
-00001151= 2E 42 20 00              123  SizeB DC.B    '.B ',0
-00001155= 2E 57 20 00              124  SizeW DC.B  '.W ',0
-00001159= 23 00                    125  NUM DC.B '#',0
-0000115B= 20 2C 20 00              126  COMMA DC.B ' , ',0
-0000115F                           127  
-0000115F                           128      END    START        ; last line of source
+00001004  E3D1                      13      lsl.w     (A1)
+00001006                            14  *TEST only , getting input
+00001006  103C 0004                 15      MOVE.B  #4,D0
+0000100A  4E4F                      16      TRAP    #15
+0000100C  3E01                      17      MOVE D1,D7
+0000100E                            18  *REAL CODE======================================
+0000100E  3C07                      19      MOVE D7,D6
+00001010                            20  * LS, AS, RO
+00001010  CC7C 0018                 21      AND #24,D6
+00001014  E64E                      22      LSR #3,D6
+00001016  BC7C 0001                 23      CMP #1,D6
+0000101A  6700 0078                 24      BEQ PRINTLS
+0000101E  BC7C 0000                 25      CMP #0,D6
+00001022  6700 007E                 26      BEQ PRINTAS
+00001026  BC7C 0002                 27      CMP #2,D6
+0000102A  6700 0086                 28      BEQ PRINTRO
+0000102E                            29      
+0000102E                            30  * left or right
+0000102E  3C07                      31  LRDefine MOVE D7,D6
+00001030  CC7C 0100                 32      AND #256,D6
+00001034  BC7C 0000                 33      CMP #0,D6
+00001038  6700 0098                 34      BEQ PRINTR
+0000103C  6000 0084                 35      BRA PRINTL
+00001040                            36  
+00001040                            37  * size
+00001040  3C07                      38  DefineSIZE    MOVE D7,D6
+00001042  CC7C 00C0                 39      AND #192,D6
+00001046  EC4E                      40      LSR #6,D6
+00001048  BC7C 0000                 41      CMP #0,D6
+0000104C  6700 0094                 42      BEQ PRINTSIZEB
+00001050  BC7C 0001                 43      CMP #1,D6
+00001054  6700 009C                 44      BEQ PRINTSIZEW
+00001058                            45  
+00001058                            46  *D# OR # IE: LSL.R (d# / #)
+00001058  3C07                      47  DEFINENUM MOVE D7,D6
+0000105A  CC7C 0010                 48      AND #16,D6
+0000105E  BC7C 0000                 49      CMP #0,D6
+00001062  6700 00B2                 50      BEQ PRINTNUM
+00001066  3C07                      51      MOVE D7,D6
+00001068  CC7C 0700                 52      AND #1792,D6
+0000106C  E04E                      53      LSR #8,D6
+0000106E  3206                      54      MOVE D6,D1
+00001070  4EB9 00001102             55      JSR PRINTDADDR
+00001076                            56      
+00001076                            57  *DISTINATION D#
+00001076  3C07                      58  DEFINEDIS MOVE D7,D6
+00001078  43F9 00001157             59      LEA     COMMA,A1
+0000107E  103C 000E                 60      MOVE.B  #14,D0
+00001082  4E4F                      61      TRAP    #15
+00001084  CC7C 0007                 62      AND #7,D6
+00001088  3206                      63      MOVE    D6,D1
+0000108A  4EB9 00001102             64      JSR PRINTDADDR
+00001090  6000 00A6                 65      BRA ENDOFLR
+00001094                            66      
+00001094  43F9 0000113E             67  PRINTLS LEA     LS,A1
+0000109A  103C 000E                 68      MOVE.B  #14,D0
+0000109E  4E4F                      69      TRAP    #15
+000010A0  608C                      70      BRA LRDefine
+000010A2  43F9 00001141             71  PRINTAS LEA     AS,A1
+000010A8  103C 000E                 72      MOVE.B  #14,D0
+000010AC  4E4F                      73      TRAP    #15
+000010AE  6000 FF7E                 74      BRA LRDefine
+000010B2  43F9 00001144             75  PRINTRO LEA     RO,A1
+000010B8  103C 000E                 76      MOVE.B  #14,D0
+000010BC  4E4F                      77      TRAP    #15
+000010BE  6000 FF6E                 78      BRA LRDefine
+000010C2  43F9 00001147             79  PRINTL LEA     L,A1
+000010C8  103C 000E                 80      MOVE.B  #14,D0
+000010CC  4E4F                      81      TRAP    #15
+000010CE  6000 FF70                 82      BRA DefineSIZE
+000010D2  43F9 00001149             83  PRINTR LEA     R,A1
+000010D8  103C 000E                 84      MOVE.B  #14,D0
+000010DC  4E4F                      85      TRAP    #15
+000010DE  6000 FF60                 86      BRA DefineSIZE
+000010E2  43F9 0000114D             87  PRINTSIZEB LEA     SizeB,A1
+000010E8  103C 000E                 88      MOVE.B  #14,D0
+000010EC  4E4F                      89      TRAP    #15
+000010EE  6000 FF68                 90      BRA DEFINENUM
+000010F2  43F9 00001151             91  PRINTSIZEW LEA     SizeW,A1
+000010F8  103C 000E                 92      MOVE.B  #14,D0
+000010FC  4E4F                      93      TRAP    #15
+000010FE  6000 FF58                 94      BRA DEFINENUM
+00001102  43F9 0000114B             95  PRINTDADDR LEA D,A1
+00001108  103C 000E                 96      MOVE.B  #14,D0
+0000110C  4E4F                      97      TRAP    #15
+0000110E  103C 0003                 98      MOVE.B  #3,D0
+00001112  4E4F                      99      TRAP    #15
+00001114  4E75                     100      RTS
+00001116  43F9 00001155            101  PRINTNUM LEA NUM,A1
+0000111C  103C 000E                102      MOVE.B  #14,D0
+00001120  4E4F                     103      TRAP    #15
+00001122  3C07                     104      MOVE D7,D6
+00001124  E04E                     105      LSR #8,D6
+00001126  E24E                     106      LSR #1,D6
+00001128  CC7C 0007                107      AND #7,D6
+0000112C  3206                     108      MOVE    D6,D1
+0000112E  103C 0003                109      MOVE.B  #3,D0
+00001132  4E4F                     110      TRAP    #15
+00001134  6000 FF40                111      BRA     DEFINEDIS
+00001138                           112  
+00001138  3A06                     113  ENDOFLR MOVE D6,D5
+0000113A  FFFF FFFF                114      SIMHALT             ; halt simulator
+0000113E                           115  
+0000113E                           116  * Put variables and constants here
+0000113E= 4C 53 00                 117  LS DC.B    'LS',0
+00001141= 41 53 00                 118  AS DC.B    'AS',0
+00001144= 52 4F 00                 119  RO DC.B    'RO',0
+00001147= 4C 00                    120  L DC.B    'L',0
+00001149= 52 00                    121  R DC.B    'R',0
+0000114B= 44 00                    122  D DC.B    'D',0
+0000114D= 2E 42 20 00              123  SizeB DC.B    '.B ',0
+00001151= 2E 57 20 00              124  SizeW DC.B  '.W ',0
+00001155= 23 00                    125  NUM DC.B '#',0
+00001157= 20 2C 20 00              126  COMMA DC.B ' , ',0
+0000115B                           127  
+0000115B                           128      END    START        ; last line of source
 
 No errors detected
 No warnings generated
@@ -138,28 +138,28 @@ No warnings generated
 SYMBOL TABLE INFORMATION
 Symbol-name         Value
 -------------------------
-AS                  1145
-COMMA               115B
-D                   114F
-DEFINEDIS           107A
-DEFINENUM           105C
-DEFINESIZE          1044
-ENDOFLR             113C
-L                   114B
-LRDEFINE            1032
-LS                  1142
-NUM                 1159
-PRINTAS             10A6
-PRINTDADDR          1106
-PRINTL              10C6
-PRINTLS             1098
-PRINTNUM            111A
-PRINTR              10D6
-PRINTRO             10B6
-PRINTSIZEB          10E6
-PRINTSIZEW          10F6
-R                   114D
-RO                  1148
-SIZEB               1151
-SIZEW               1155
+AS                  1141
+COMMA               1157
+D                   114B
+DEFINEDIS           1076
+DEFINENUM           1058
+DEFINESIZE          1040
+ENDOFLR             1138
+L                   1147
+LRDEFINE            102E
+LS                  113E
+NUM                 1155
+PRINTAS             10A2
+PRINTDADDR          1102
+PRINTL              10C2
+PRINTLS             1094
+PRINTNUM            1116
+PRINTR              10D2
+PRINTRO             10B2
+PRINTSIZEB          10E2
+PRINTSIZEW          10F2
+R                   1149
+RO                  1144
+SIZEB               114D
+SIZEW               1151
 START               1000
