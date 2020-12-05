@@ -69,7 +69,7 @@ ZEROONE
 *-----SETUP BITS 13-12-----
     MOVE.W  D7,D6           ;COPY ORIGINAL TO D6
     AND.W   #$3000,D6       ;CLEAR ALL BUT BITS 13-12
-    ROL.W   #4,D6
+    ROL.W   #4,D6           ;MOVE BITS 13-12 TO 1-0
     
 *CHECK FOR SECONDARY SUBROUTINES OR PROCESS SUB
     CMP.B   #%00,D6
@@ -91,28 +91,28 @@ ZEROONE
 ZEROONE_SECONDARY_BRANCH
 *---CHECK FOR JSR----
     MOVE.W  D7,D6
-    AND.W   #$FC0,D6    ;CLEAR ALL BUT BITS 11-6
+    AND.W   #$0FC0,D6    ;CLEAR ALL BUT BITS 11-6
     LSR.W   #6,D6       ;MOVE BITS 11-6 TO 5-0
     CMP.B   #$3A,D6
     BEQ     PROCESS_JSR ;JSR
     
 *---CHECK FOR NOT-----
     MOVE.W  D7,D6
-    AND.W   #$F00,D6    ;CLEAR ALL BUT BITS 11-8
+    AND.W   #$0F00,D6    ;CLEAR ALL BUT BITS 11-8
     LSR.W   #8,D6       ;MOVE BITS 11-8 TO 3-0
     CMP.B   #$6,D6
     BEQ     PROCESS_NOT ;NOT
     
 *---CHECK FOR LEA----
     MOVE.W  D7,D6
-    AND.W   #$1C0,D6    ;CLEAR ALL BUT BITS 8-6
+    AND.W   #$01C0,D6    ;CLEAR ALL BUT BITS 8-6
     LSR.W   #6,D6       ;MOVE BITS 8-6 TO 2-0
     CMP.B   #$7,D6
     BEQ     PROCESS_LEA ;LEA
     
 *---CHECK FOR MOVEM---
     MOVE.W  D7,D6
-    AND.W   #$380,D6    ;CLEAR ALL BUT BITS 9-7
+    AND.W   #$0380,D6    ;CLEAR ALL BUT BITS 9-7
     LSR.W   #7,D6       ;MOVE BITS 9-7 TO 2-0
     CMP.B   #$1,D6
     BEQ     PROCESS_MOVEM   ;MOVEM
@@ -226,7 +226,7 @@ PROCESS_MOVE
 *PROCESS OUTPUT FOR MOVEQ
 *D7 = ORIGINAL WORD OF MEMORY 
 PROCESS_MOVEQ
-    JMP     CHECK_AND_OR_MOVEQ_EA       ;CHECK IF EA IS VALID
+    *JMP     CHECK_AND_OR_MOVEQ_EA       ;CHECK IF EA IS VALID
 *----I/O MOVEQ----
     LEA     MESSAGE_MOVEQ,A1
     MOVE.B  #14,D0
@@ -492,7 +492,10 @@ CHECK_NOT_EA
     AND.W   #$0007,D6
     
     CMP.B   #$1,D6
-    BGT     PRINT_DATA
+    BEQ     PRINT_DATA
+    
+    CMP.B   #$2,D6
+    BGE     CHECK_ADD_ERROR_EA_REGISTER
     
     RTS
     
@@ -628,7 +631,7 @@ PROCESS_SUB
 ADD_BRANCH_SUBROUTINE
 *---SETUP----------
     MOVE.W  D7,D6
-    AND.W   #$1C0,D6
+    AND.W   #$01C0,D6
     LSR.W   #6,D6
     
 *----CHECK FOR ADDA---
@@ -774,11 +777,11 @@ CHECK_ADD_ERROR
     RTS                         ;RETURN TO PROCESS_ADD
     
 *--------------------------------------------
-*IF OPMODE SHOWS ADD Dn,<ea>, CHECK DESTINATION IS VALID 
+*IF OPMODE SHOWS ADD, LSs Dn,<ea>, CHECK DESTINATION IS VALID 
 *D7=ORIGINAL
 CHECK_ADD_EA
     MOVE.W  D7,D6
-    AND.W   #$0031,D6
+    AND.W   #$0038,D6
     LSR.W   #$3,D6
 
 *----CHECK FOR Dn & An----
@@ -876,18 +879,6 @@ PRINT_ADDQ_DATA
     MOVE.B  #14,D0
     TRAP    #15
     
-    MOVE.W  D7,D6
-    AND.W   #$0E00,D6
-    ROL.W   #$7,D6
-    MOVE.B  D6,D1
-    MOVE.B  #15,D0
-    MOVE.B  #16,D2
-    TRAP    #15
-    
-*----COMMA----
-    LEA     MESSGAE_COMMA,A1
-    MOVE.B  #14,D0
-    TRAP    #15
     
 *----EA----
     MOVE.W  D7,D6
@@ -895,7 +886,20 @@ PRINT_ADDQ_DATA
     MOVEM.W D7/A5/A6,-(SP)
     JMP     DeAddr              ;PRINT EA
     
+*----COMMA----
+    LEA     MESSGAE_COMMA,A1
+    MOVE.B  #14,D0
+    TRAP    #15
+    
+*----register----
     MOVEM.W (SP)+,D7,A5,A6
+    MOVE.W  D7,D6
+    AND.W   #$0E00,D6
+    ROL.W   #$7,D6
+    MOVE.B  D6,D1
+    MOVE.B  #15,D0
+    MOVE.B  #16,D2
+    TRAP    #15
     
 *----NEW LINE----
     LEA     newline,A1
