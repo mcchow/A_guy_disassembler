@@ -16,7 +16,59 @@ START:                  ; first instruction of program
     TRAP    #15
     MOVE D1,D7
 *REAL CODE======================================
-    MOVE D7,D6
+* memory shift
+startLS    MOVE D7,D6
+    AND #192,D6
+    LSR #6,D6
+    CMP #3,D6
+    BEQ MSLS
+    BRA NormalLS
+*memory shift section
+MSLS    * LS, AS, RO
+    LSR #8,D6
+    LSR #1,D6
+    AND #3,D6
+    CMP #1,D6
+    BEQ PRINTLSM
+    CMP #0,D6
+    BEQ PRINTASM
+    CMP #2,D6
+    BEQ PRINTROM
+
+MSLR    MOVE D7,D6
+    AND #256,D6
+    CMP #0,D6
+    BEQ PRINTRM
+    BRA PRINTLM
+MSEA    MOVE D7,D6
+*print effective address.... need to copy
+    BRA ENDOFLR
+
+
+PRINTLSM LEA     LS,A1
+    MOVE.B  #14,D0
+    TRAP    #15
+    BRA MSLR
+PRINTASM LEA     AS,A1
+    MOVE.B  #14,D0
+    TRAP    #15
+    BRA MSLR
+PRINTROM LEA     RO,A1
+    MOVE.B  #14,D0
+    TRAP    #15
+    BRA MSLR
+PRINTLM LEA     L,A1
+    MOVE.B  #14,D0
+    TRAP    #15
+    BRA DefineSIZE
+PRINTRM LEA     R,A1
+    MOVE.B  #14,D0
+    TRAP    #15
+    BRA DefineSIZE
+
+
+
+NormalLS    MOVE D7,D6
 * LS, AS, RO
     AND #24,D6
     LSR #3,D6
@@ -126,6 +178,9 @@ NUM DC.B '#',0
 COMMA DC.B ' , ',0
 
     END    START        ; last line of source
+
+
+
 
 
 
