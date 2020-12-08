@@ -1,6 +1,6 @@
 *-----------------------------------------------------------
 * Title      :Group A Guy Deconstructor
-* Written by :Daniel Lorentz, Martin, Dale
+* Written by :Daniel Lorentz, Martin Chow, Dale Berg
 * Date       :12/5/20
 * Description:
 *-----------------------------------------------------------
@@ -261,7 +261,7 @@ ZEROONE_SECONDARY_BRANCH
     AND.W   #$0380,D6    ;CLEAR ALL BUT BITS 9-7
     LSR.W   #7,D6       ;MOVE BITS 9-7 TO 2-0
     CMP.B   #$1,D6
-    BEQ     PROCESS_MOVEM   ;MOVEM
+    BEQ     MOVEMfunc   ;MOVEM
     
 *--------------------------------------------
 *SUB, & OR
@@ -299,13 +299,13 @@ ONEONE
     
 *CHECK FOR LSd, ASd, & ROd
     CMP.B   #$2,D6
-    BEQ     ONEONE_SHIFT_SUBROUTINE ;MARTIN'S WORKING ON THIS
+    BEQ     startLS ;MARTIN'S WORKING ON THIS
 
 *++++++++++++++++++++++++++++++++++NOP & RTS+++++++++++++++++++
 *--------------------------------------------
 *PROCESS OUTPUT FOR NOP
 *D7 = ORIGINAL WORD OF MEMORY 
-PROCESS_NOP
+PRINT_NOP
 *----I/O NOP----
     LEA     MESSAGE_NOP,A1
     MOVE.B  #14,D0
@@ -316,7 +316,7 @@ PROCESS_NOP
 *--------------------------------------------
 *PROCESS OUTPUT FOR NOP
 *D7 = ORIGINAL WORD OF MEMORY 
-PROCESS_RTS
+PRINT_RTS
 *----I/O RTS----
     LEA     MESSAGE_RTS,A1
     MOVE.B  #14,D0
@@ -416,7 +416,7 @@ PROCESS_MOVEQ
     TRAP    #15
     
 *----NEW LINE----
-    LEA     newline,A1
+    LEA     new_line,A1
     MOVE.B  #14,D0
     TRAP    #15  
     
@@ -483,7 +483,7 @@ PRINT_MOVE_EA
     MOVEM.W (SP)+,D7/A5/A6
     
 *----NEW LINE----
-    LEA     newline,A1
+    LEA     new_line,A1
     MOVE.B  #14,D0
     TRAP    #15  
     
@@ -529,7 +529,7 @@ PROCESS_LEA
     TRAP    #15
     
 *----NEW LINE----
-    LEA     newline,A1
+    LEA     new_line,A1
     MOVE.B  #14,D0
     TRAP    #15  
     
@@ -586,7 +586,7 @@ PROCESS_JSR
     MOVEM.W (SP)+,D7/A5/A6
 
 *----NEW LINE----
-    LEA     newline,A1
+    LEA     new_line,A1
     MOVE.B  #14,D0
     TRAP    #15  
     
@@ -663,7 +663,7 @@ PRINT_NOT_BYTE
     MOVEM.W (SP)+,D7/A5/A6
 
 *----NEW LINE----
-    LEA     newline,A1
+    LEA     new_line,A1
     MOVE.B  #14,D0
     TRAP    #15  
     
@@ -687,7 +687,7 @@ PRINT_NOT_WORD
     MOVEM.W (SP)+,D7/A5/A6
     
 *----NEW LINE----
-    LEA     newline,A1
+    LEA     new_line,A1
     MOVE.B  #14,D0
     TRAP    #15  
     
@@ -711,7 +711,7 @@ PRINT_NOT_LONG
     MOVEM.W (SP)+,D7/A5/A6
     
     *----NEW LINE----
-    LEA     newline,A1
+    LEA     new_line,A1
     MOVE.B  #14,D0
     TRAP    #15  
     
@@ -846,7 +846,7 @@ PROCESS_ADDA_WORD
     TRAP    #15
     
 *----NEW LINE----
-    LEA     newline,A1
+    LEA     new_line,A1
     MOVE.B  #14,D0
     TRAP    #15  
     
@@ -887,7 +887,7 @@ PROCESS_ADDA_LONG
     TRAP    #15
     
 *----NEW LINE----
-    LEA     newline,A1
+    LEA     new_line,A1
     MOVE.B  #14,D0
     TRAP    #15  
     
@@ -913,7 +913,7 @@ PROCESS_ADD
 *D7=ORIGINAL
 CHECK_ADD_ERROR
     MOVE.W  D7,D6
-    AND.W   #$01CO,D6
+    AND.W   #$01C0,D6
     LSR.W   #6,D6
 
 *----CHECK IF OPMODE = 4, 5, OR 6----
@@ -1033,7 +1033,7 @@ PRINT_ADDQ_DATA
     JMP     DeAddr              ;PRINT EA
     
 *----COMMA----
-    LEA     MESSGAE_COMMA,A1
+    LEA     MESSAGE_COMMA,A1
     MOVE.B  #14,D0
     TRAP    #15
     
@@ -1048,11 +1048,11 @@ PRINT_ADDQ_DATA
     TRAP    #15
     
 *----NEW LINE----
-    LEA     newline,A1
+    LEA     new_line,A1
     MOVE.B  #14,D0
     TRAP    #15
     
-    BRA     PRIME_LOOP
+    BRA     PRIMELOOP
     
 *++++++++++++++++++++++++++++++++++OUTPUT REGISTER, OPMODE, & EA+++++++++++++++++++
 *OUTPUT PRINT FOR ADD, ADDA, SUB, AND, OR
@@ -1145,7 +1145,7 @@ PRINT_EA_Dn
     TRAP    #15
     
 *----NEW LINE----
-    LEA     newline,A1
+    LEA     new_line,A1
     MOVE.B  #14,D0
     TRAP    #15  
     
@@ -1215,7 +1215,7 @@ PRINT_Dn_EA
     
     MOVEM.W (SP)+,D7,A5,A6
 *----NEW LINE----
-    LEA     newline,A1
+    LEA     new_line,A1
     MOVE.B  #14,D0
     TRAP    #15
     
@@ -1454,7 +1454,7 @@ DISPLACEMENT_BCC
     BEQ     PRINT_16BIT
     
 *----CHECK FOR 32----
-    CMP.B   #FF,D6
+    CMP.B   #$FF,D6
     BEQ     PRINT_32BIT
     
 *----ALL OTHERS----
@@ -1469,7 +1469,7 @@ PRINT_16BIT
     MOVE.B  #16,D2
     TRAP    #15
 *----NEW LINE----
-    LEA     newline,A1
+    LEA     new_line,A1
     MOVE.B  #14,D0
     TRAP    #15  
     
@@ -1485,7 +1485,7 @@ PRINT_32BIT
     TRAP    #15
     
 *----NEW LINE----
-    LEA     newline,A1
+    LEA     new_line,A1
     MOVE.B  #14,D0
     TRAP    #15  
     
@@ -1500,14 +1500,369 @@ PRINT_8BIT
     MOVE.B  #16,D2
     TRAP    #15
     
+*----NEW LINE----
+    LEA     new_line,A1
+    MOVE.B  #14,D0
+    TRAP    #15  
+    
+    BRA     PRIMELOOP
+  
+*--------------------------------------------
+*PRINT WORD OF DATA THAT DOES NOT MATCH DECODING OPTIONS
+*D7=ORIGINAL  
+PRINT_DATA
+*----I/O DATA----
+    LEA     MESSAGE_DATA,A1
+    MOVE.B  #14,D0
+    TRAP    #15
+    
+*----PRINT DATA AS HEX----
+    MOVE.B  #15,D0
+    MOVE.W  D7,D1
+    MOVE.B  #16,D2
+    TRAP    #15
+    
+*----NEW LINE----
+    LEA     new_line,A1
+    MOVE.B  #14,D0
+    TRAP    #15  
+    
+    BRA     PRIMELOOP
+    
+    
+ENDPROGRAM
+    
 
-    SIMHALT             ; halt simulator
 
 *----------------------Martin Code--------------------------------
 *----------------------MOVEM--------------------------------
 
-*----------------------LSd,ASd,ROd--------------------------------
 
+*Start of the move M function
+MOVEMfunc    JSR printMOVEM
+*print size
+DefineSIZE    MOVE D7,D6
+    AND #64,D6
+    LSR #6,D6
+    CMP #0,D6
+    BEQ PRINTSIZEW
+    JSR printTAP
+* define read or write
+    MOVE D7,D6
+    AND #1024,D6
+    LSR #6,D6
+    CMP #0,D6
+    BEQ MOVEMwrite
+    BRA MOVEMread
+*Register to memory
+MOVEMwrite  MOVE A5,D6
+    ADD #16,A5
+    JSR FirstD
+    JSR printcomma
+    JSR DeAddr
+    BRA ENDMOVEMfunc
+MOVEMread      JSR DeAddr
+    JSR printcomma
+    MOVE A5,D6
+    ADD #16,A5
+    JSR FirstD
+    
+
+ENDMOVEMfunc    RTS    
+
+
+printMOVEM  LEA     MOVEM,A1
+        MOVE.B  #14,D0
+        TRAP    #15
+        RTS
+
+printTAP  LEA     MOVEM,A1
+        MOVE.B  #14,D0
+        TRAP    #15
+        RTS
+
+printcomma  LEA     comma,A1
+        MOVE.B  #14,D0
+        TRAP    #15
+        RTS
+        
+PRINTSIZEW  LEA     dotw,A1
+        MOVE.B  #14,D0
+        TRAP    #15
+        RTS  
+        
+FirstD  CMP #8,D1
+    BEQ FirstAST
+    MOVE D6,D5
+
+* DETERMINE DIRECTION(READ OR WRITE TO M)
+    CMP #0,D4
+    BEQ FDIN
+    BRA FDRE
+FDIN    AND #1,D5
+    LSR #1,D6
+    BRA ENDFDIN
+FDRE    AND #32768,D5
+    LSL #1,D6
+    
+ENDFDIN    CMP #0,D5
+    BEQ FirstDADDONE
+    JSR PRINTDMM
+    JSR PRINTDIGIMM
+    BRA NextDST
+FirstDADDONE    ADD #1,D1
+    BRA FirstD
+    
+* PRINT NEXT D# START WITH /
+NextDST ADD #1,D1
+NextD   CMP #8,D1
+    BEQ FirstASTSL
+    MOVE D6,D5
+* DETERMINE DIRECTION(READ OR WRITE TO M)
+    CMP #0,D4
+    BEQ NDIN
+    BRA NDRE
+NDIN    AND #1,D5
+    LSR #1,D6
+    BRA ENDNDIN
+NDRE    AND #32768,D5
+    LSL #1,D6
+    
+ENDNDIN CMP #0,D5
+    BEQ NEXTDADDONE
+    JSR PRINTSLASHMM
+    JSR PRINTDMM
+    JSR PRINTDIGIMM
+NEXTDADDONE    ADD #1,D1    
+    BRA NEXTD
+
+*======================================================================
+
+*SET PRINT SLASH FLAG TO 1 AS THERE IS D#
+FirstASTSL MOVE #1,D2
+* PRINT FIRST A#
+FirstAST MOVE #0,D1
+
+FirstA  CMP #8,D3
+    BEQ MESHEND
+    MOVE D6,D5
+    
+* DETERMINE DIRECTION(READ OR WRITE TO M)
+    CMP #0,D4
+    BEQ FAIN
+    BRA FARE
+FAIN    AND #1,D5
+    LSR #1,D6
+    BRA ENDFAIN
+FARE    AND #32768,D5
+    LSL #1,D6
+    
+ENDFAIN   CMP #0,D5
+    BEQ FirstAADDONE
+
+    CMP #0,D2
+    BEQ noslash
+    JSR PRINTSLASHMM
+noslash    JSR PRINTAMM
+    JSR PRINTDIGIMM
+    BRA NextAST
+FirstAADDONE    ADD #1,D1
+    BRA FirstA
+
+NextAST ADD #1,D1
+NextA   CMP #8,D1
+    BEQ MESHEND
+    MOVE D6,D5
+* DETERMINE DIRECTION(READ OR WRITE TO M)
+    CMP #0,D4
+    BEQ NAIN
+    BRA NARE
+NAIN    AND #1,D5
+    LSR #1,D6
+    BRA ENDNAIN
+NARE    AND #32768,D5
+    LSL #1,D6
+    
+ENDNAIN    CMP #0,D5
+    BEQ NEXTAADDONE
+    JSR PRINTSLASHMM
+    JSR PRINTAMM
+    JSR PRINTDIGIMM
+NEXTAADDONE    ADD #1,D1    
+    BRA NEXTA
+
+MESHEND MOVE D0,D0
+
+*PRINT D FOR MOVEM
+PRINTDMM    LEA     D,A1
+        MOVE.B  #14,D0
+        TRAP    #15
+        RTS
+        
+*PRINT A FOR MOVEM        
+PRINTAMM    LEA     A,A1
+        MOVE.B  #14,D0
+        TRAP    #15
+        RTS
+*PRINT DIGI MOVE M
+PRINTDIGIMM   MOVE.B  #3,D0
+    TRAP    #15
+    RTS
+
+*PRINT /
+PRINTSLASHMM    LEA     SLASH,A1
+        MOVE.B  #14,D0
+        TRAP    #15
+        RTS
+        
+*----------------------LSd,ASd,ROd--------------------------------
+startLS    MOVE D7,D6
+    AND #192,D6
+    LSR #6,D6
+    CMP #3,D6
+    BEQ MSLS
+    BRA NormalLS
+*memory shift section
+MSLS    * LS, AS, RO
+    LSR #8,D6
+    LSR #1,D6
+    AND #3,D6
+    CMP #1,D6
+    BEQ PRINTLSM
+    CMP #0,D6
+    BEQ PRINTASM
+    CMP #2,D6
+    BEQ PRINTROM
+
+MSLR    MOVE D7,D6
+    AND #256,D6
+    CMP #0,D6
+    BEQ PRINTRM
+    BRA PRINTLM
+MSEA    MOVE D7,D6
+*print effective address.... need to copy
+    BRA ENDOFLR
+
+
+PRINTLSM LEA     LS,A1
+    MOVE.B  #14,D0
+    TRAP    #15
+    BRA MSLR
+PRINTASM LEA     AS,A1
+    MOVE.B  #14,D0
+    TRAP    #15
+    BRA MSLR
+PRINTROM LEA     RO,A1
+    MOVE.B  #14,D0
+    TRAP    #15
+    BRA MSLR
+PRINTLM LEA     L,A1
+    MOVE.B  #14,D0
+    TRAP    #15
+    BRA DefineSIZE
+PRINTRM LEA     R,A1
+    MOVE.B  #14,D0
+    TRAP    #15
+    BRA DefineSIZE
+
+
+
+NormalLS    MOVE D7,D6
+* LS, AS, RO
+    AND #24,D6
+    LSR #3,D6
+    CMP #1,D6
+    BEQ PRINTLS
+    CMP #0,D6
+    BEQ PRINTAS
+    CMP #2,D6
+    BEQ PRINTRO
+    
+* left or right
+LRDefine MOVE D7,D6
+    AND #256,D6
+    CMP #0,D6
+    BEQ PRINTR
+    BRA PRINTL
+
+* size
+DefineSIZE    MOVE D7,D6
+    AND #192,D6
+    LSR #6,D6
+    CMP #0,D6
+    BEQ PRINTSIZEB
+    CMP #1,D6
+    BEQ PRINTSIZEW
+
+*D# OR # IE: LSL.R (d# / #)
+DEFINENUM MOVE D7,D6
+    AND #16,D6
+    CMP #0,D6
+    BEQ PRINTNUM
+    MOVE D7,D6
+    AND #1792,D6
+    LSR #8,D6
+    MOVE D6,D1
+    JSR PRINTDADDR
+    
+*DISTINATION D#
+DEFINEDIS MOVE D7,D6
+    LEA     COMMA,A1
+    MOVE.B  #14,D0
+    TRAP    #15
+    AND #7,D6
+    MOVE    D6,D1
+    JSR PRINTDADDR
+    BRA ENDOFLR
+    
+PRINTLS LEA     LS,A1
+    MOVE.B  #14,D0
+    TRAP    #15
+    BRA LRDefine
+PRINTAS LEA     AS,A1
+    MOVE.B  #14,D0
+    TRAP    #15
+    BRA LRDefine
+PRINTRO LEA     RO,A1
+    MOVE.B  #14,D0
+    TRAP    #15
+    BRA LRDefine
+PRINTL LEA     L,A1
+    MOVE.B  #14,D0
+    TRAP    #15
+    BRA DefineSIZE
+PRINTR LEA     R,A1
+    MOVE.B  #14,D0
+    TRAP    #15
+    BRA DefineSIZE
+PRINTSIZEB LEA     SizeB,A1
+    MOVE.B  #14,D0
+    TRAP    #15
+    BRA DEFINENUM
+PRINTSIZEW LEA     SizeW,A1
+    MOVE.B  #14,D0
+    TRAP    #15
+    BRA DEFINENUM
+PRINTDADDR LEA D,A1
+    MOVE.B  #14,D0
+    TRAP    #15
+    MOVE.B  #3,D0
+    TRAP    #15
+    RTS
+PRINTNUM LEA NUM,A1
+    MOVE.B  #14,D0
+    TRAP    #15
+    MOVE D7,D6
+    LSR #8,D6
+    LSR #1,D6
+    AND #7,D6
+    MOVE    D6,D1
+    MOVE.B  #3,D0
+    TRAP    #15
+    BRA     DEFINEDIS
+
+ENDOFLR MOVE D6,D5
+    RTS
 *----------------------EA--------------------------------
 * Assuming address is in D1
     
@@ -1691,6 +2046,7 @@ MESSAGE_LONG        DC.B    '.L    ',0
 MESSAGE_DIRECTORY   DC.B    'D',0
 MESSAGE_ADDRESS     DC.B    'A',0
 MESSAGE_COMMA       DC.B    ',',0
+MESSAGE_DATA        DC.B    'DATA:     ',0
 
 *----------------------Martin Variables--------------------------------
 D DC.B    'D',0
@@ -1702,6 +2058,25 @@ CloBra DC.B ')',0
 PlusSign DC.B '+',0
 NegSign DC.B '-',0
 NEXTLINE DC.B CR,LF,0
+
+LS DC.B    'LS',0
+AS DC.B    'AS',0
+RO DC.B    'RO',0
+L DC.B    'L',0
+R DC.B    'R',0
+SizeB DC.B    '.B ',0
+SizeW DC.B  '.W ',0
+NUM DC.B '#',0
+COMMA DC.B ' , ',0
+
+SLASH DC.B '/',0
+
+EA  DC.B    '<EA>',0
+MOVEM   DC.B  'MOVEM',0
+TAP DC.B    '   ',0
+
+dotw    DC.B    '.W',0
+
     END    START        ; last line of source
 
 *~Font name~Courier New~
