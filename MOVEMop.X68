@@ -14,11 +14,11 @@ START:                  ; first instruction of program
 *Start of the move M function
 MOVEMfunc    JSR printMOVEM
 *print size
-DefineSIZE    MOVE D7,D6
+    MOVE D7,D6
     AND #64,D6
     LSR #6,D6
     CMP #0,D6
-    BEQ PRINTSIZEW
+    BEQ PRINTSIZEDW
     JSR printTAP
 * define read or write
     MOVE D7,D6
@@ -59,7 +59,7 @@ printcomma  LEA     comma,A1
         TRAP    #15
         RTS
         
-PRINTSIZEW  LEA     dotw,A1
+PRINTSIZEDW  LEA     dotw,A1
         MOVE.B  #14,D0
         TRAP    #15
         RTS        
@@ -72,6 +72,7 @@ comma DC.B  ',',0
 dotw    DC.B    '.W',0
 
     END    START        ; last line of source
+
 
 *~Font name~Courier New~
 *~Font size~10~
