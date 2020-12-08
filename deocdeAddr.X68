@@ -121,8 +121,7 @@ IMMEADDR    LEA     NumSign,A1
 
 
 
-EndDeAddr   MOVE D1,D0 
-    SIMHALT             ; halt simulator
+EndDeAddr   RTS          ; halt simulator
    
 
 * Put variables and constants here
@@ -141,6 +140,7 @@ NEXTLINE DC.B CR,LF,0
 
     END    START        ; last line of source
     
+
 
 *~Font name~Courier New~
 *~Font size~10~
