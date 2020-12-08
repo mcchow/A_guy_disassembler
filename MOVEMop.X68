@@ -18,10 +18,13 @@ MOVEMfunc    JSR printMOVEM
     AND #64,D6
     LSR #6,D6
     CMP #0,D6
-    BEQ PRINTSIZEDW
+    BEQ PRINTSIZEDMM
     JSR printTAP
+    BRA ENDPRINTWM
+PRINTSIZEDWMM   JSR PRINTSIZEDW
+    
 * define read or write
-    MOVE D7,D6
+ENDPRINTWM    MOVE D7,D6
     AND #1024,D6
     LSR #6,D6
     CMP #0,D6
@@ -72,6 +75,7 @@ comma DC.B  ',',0
 dotw    DC.B    '.W',0
 
     END    START        ; last line of source
+
 
 
 *~Font name~Courier New~
