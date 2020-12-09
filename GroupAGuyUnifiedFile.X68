@@ -1559,6 +1559,7 @@ MOVEMfunc    JSR printMOVEM
 *Register to memory
 MOVEMwrite  MOVE A5,D6
     ADD #16,A5
+    MOVE #0,D1
     JSR FirstD
     JSR printcomma
     JSR DeAddr
@@ -1567,6 +1568,7 @@ MOVEMread      JSR DeAddr
     JSR printcomma
     MOVE A5,D6
     ADD #16,A5
+    MOVE #0,D1
     JSR FirstD
     
 
@@ -1595,7 +1597,6 @@ PRINTSIZEDW  LEA     dotw,A1
   
         
 FirstD  
-    MOVE.L  #$0,D1
     CMP #8,D1
     BEQ FirstAST
     MOVE D6,D5
@@ -2084,6 +2085,7 @@ TAP DC.B    '   ',0
 dotw    DC.B    '.W',0
 
     END    START        ; last line of source
+
 
 *~Font name~Courier New~
 *~Font size~10~
