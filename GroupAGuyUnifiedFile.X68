@@ -191,7 +191,7 @@ ZEROZERO
 *----SETUP----
     MOVE.W  D7,D6
     AND.W   #$01C0,D6       ;CLEAR ALL BUT BITS 8-6
-    LSL.W   #6,D6           ;MOVE BITS 8-6 TO 2-0
+    LSR.W   #6,D6           ;MOVE BITS 8-6 TO 2-0
     
 *----MOVEA----
     CMP.B   #01,D6
@@ -368,6 +368,8 @@ PROCESS_MOVE
     CMP.B   #2,D6
     BEQ     PRINT_MOVE_LONG
     
+    JMP     PRINT_DATA
+    
 *--------------------------------------------
 *PROCESS OUTPUT FOR MOVEQ
 *D7 = ORIGINAL WORD OF MEMORY 
@@ -391,7 +393,7 @@ PROCESS_MOVEQ
 *----I/O DATA(HEX FORMAT)----
     MOVE.W  D7,D6
     AND.W   #$00FF,D6
-    MOVE.B  D6,D1
+    MOVE.L  D6,D1
     MOVE.B  #15,D0
     MOVE.B  #16,D2      ;PRINT AS HEX
     TRAP    #15
@@ -410,7 +412,7 @@ PROCESS_MOVEQ
     MOVE.W  D7,D6
     AND.W   #$0E00,D6
     ROL.W   #7,D6
-    MOVE.B  D6,D1
+    MOVE.L  D6,D1
     MOVE.B  #10,D2
     MOVE.B  #15,D0
     TRAP    #15
@@ -463,10 +465,8 @@ PRINT_MOVE_EA
 *----PRINT SOURCE EA----
     MOVE.W  D7,D6
     AND.W   #$003F,D6
-    MOVEM.W D7/A5/A6,-(SP)
     JSR     DeAddr              ;PRINT EA
-    
-    MOVEM.W (SP)+,D7/A5/A6
+
     
 *----COMMA----
     LEA     MESSAGE_COMMA,A1
@@ -477,10 +477,8 @@ PRINT_MOVE_EA
     MOVE.W  D7,D6
     AND.W   #$0FC0,D6  
     LSR.W   #6,D6
-    MOVEM.W D7/A5/A6,-(SP)
     JSR     DeAddr              ;PRINT EA
     
-    MOVEM.W (SP)+,D7/A5/A6
     
 *----NEW LINE----
     LEA     new_line,A1
@@ -495,7 +493,7 @@ PRINT_MOVE_EA
 *PROCESS OUTPUT FOR LEA
 *D7 = ORIGINAL WORD OF MEMORY 
 PROCESS_LEA
-    JMP     CHECK_LEA_JSR_EA
+    JSR     CHECK_LEA_JSR_EA
     
 *----I/O LEA----
     LEA     MESSAGE_LEA,A1
@@ -505,11 +503,8 @@ PROCESS_LEA
 *----SETUP EA----
     MOVE.W  D7,D6
     AND.W   #$003F,D6
-    MOVEM.W D7/A5/A6,-(SP)
     JMP     DeAddr              ;PRINT EA
     
-    MOVEM.W (SP)+,D7/A5/A6
-
 *----COMMA----
     LEA     MESSAGE_COMMA,A1
     MOVE.B  #14,D0
@@ -580,10 +575,8 @@ PROCESS_JSR
 *----SETUP EA----
     MOVE.W  D7,D6
     AND.W   #$003F,D6
-    MOVEM.W D7/A5/A6,-(SP)
     JMP     DeAddr              ;PRINT EA
     
-    MOVEM.W (SP)+,D7/A5/A6
 
 *----NEW LINE----
     LEA     new_line,A1
@@ -657,10 +650,9 @@ PRINT_NOT_BYTE
 *----SETUP EA----
     MOVE.W  D7,D6
     AND.W   #$003F,D6
-    MOVEM.W D7/A5/A6,-(SP)
+
     JMP     DeAddr              ;PRINT EA
     
-    MOVEM.W (SP)+,D7/A5/A6
 
 *----NEW LINE----
     LEA     new_line,A1
@@ -681,10 +673,10 @@ PRINT_NOT_WORD
 *----SETUP EA----
     MOVE.W  D7,D6
     AND.W   #$003F,D6
-    MOVEM.W D7/A5/A6,-(SP)
+
     JMP     DeAddr              ;PRINT EA
     
-    MOVEM.W (SP)+,D7/A5/A6
+
     
 *----NEW LINE----
     LEA     new_line,A1
@@ -705,10 +697,10 @@ PRINT_NOT_LONG
 *----SETUP EA----
     MOVE.W  D7,D6
     AND.W   #$003F,D6
-    MOVEM.W D7/A5/A6,-(SP)
+
     JMP     DeAddr              ;PRINT EA
     
-    MOVEM.W (SP)+,D7/A5/A6
+
     
     *----NEW LINE----
     LEA     new_line,A1
@@ -722,7 +714,7 @@ PRINT_NOT_LONG
 *PROCESS OUTPUT FOR AND
 *D7 = ORIGINAL WORD OF MEMORY 
 PROCESS_AND
-    JMP     CHECK_AND_OR_MOVEQ_EA     ;FUNCTION CHECKS IF EA IS VALID
+    JSR     CHECK_AND_OR_MOVEQ_EA     ;FUNCTION CHECKS IF EA IS VALID
     
 *----I/O AND----
     LEA     MESSAGE_AND,A1
@@ -823,7 +815,7 @@ PROCESS_ADDA_WORD
 *----EA OUTPUT----
     MOVE.W  D7,D6
     AND.W   #$003F,D6
-    MOVEM.W D7/A5/A6,-(SP)
+
     JSR     DeAddr              ;PRINT EA
     
 *----PRINT COMMA----
@@ -832,7 +824,7 @@ PROCESS_ADDA_WORD
     TRAP    #15
     
 *----DIRECTORY OUTPUT----
-    MOVEM.W (SP)+,D7,A5,A6
+
     LEA     MESSAGE_ADDRESS,A1
     MOVE.B  #14,D0
     TRAP    #15
@@ -864,7 +856,7 @@ PROCESS_ADDA_LONG
 *----EA OUTPUT----
     MOVE.W  D7,D6
     AND.W   #$003F,D6
-    MOVEM.W D7/A5/A6,-(SP)
+
     JSR     DeAddr              ;PRINT EA
     
 *----PRINT COMMA----
@@ -873,7 +865,7 @@ PROCESS_ADDA_LONG
     TRAP    #15
     
 *----DIRECTORY OUTPUT----
-    MOVEM.W (SP)+,D7,A5,A6
+
     LEA     MESSAGE_DIRECTORY,A1
     MOVE.B  #14,D0
     TRAP    #15
@@ -921,7 +913,7 @@ CHECK_ADD_ERROR
     CMP.B   #$4,D6
     BGE     CHECK_ADD_EA    
     
-    RTS                         ;RETURN TO PROCESS_ADD
+    JMP     PROCESS_ADD_CLEAR           ;RETURN TO PROCESS_ADD
     
 *--------------------------------------------
 *IF OPMODE SHOWS ADD, LSs Dn,<ea>, CHECK DESTINATION IS VALID 
@@ -1028,7 +1020,7 @@ PRINT_ADDQ_DATA
     
     
 *----register----
-    MOVEM.W (SP)+,D7,A5,A6
+
     MOVE.W  D7,D6
     AND.W   #$0E00,D6
     ROL.W   #$7,D6
@@ -1045,7 +1037,7 @@ PRINT_ADDQ_DATA
 *----EA----
     MOVE.W  D7,D6
     AND.W   #$003F,D6
-    MOVEM.W D7/A5/A6,-(SP)
+
     JSR     DeAddr              ;PRINT EA
 
     
@@ -1125,7 +1117,7 @@ PRINT_EA_Dn
 *----EA OUTPUT----
     MOVE.W  D7,D6
     AND.W   #$003F,D6
-    MOVEM.W D7/A5/A6,-(SP)
+
     JSR     DeAddr              ;PRINT EA
     
 *----PRINT COMMA----
@@ -1134,7 +1126,7 @@ PRINT_EA_Dn
     TRAP    #15
     
 *----DIRECTORY OUTPUT----
-    MOVEM.W (SP)+,D7,A5,A6
+
     LEA     MESSAGE_DIRECTORY,A1
     MOVE.B  #14,D0
     TRAP    #15
@@ -1202,7 +1194,7 @@ PRINT_Dn_EA
     AND.W   #$0E00,D6
     ROL.W   #$7,D6
     MOVE.B  #3,D0
-    MOVE.W  D6,D1
+    MOVE.B  D6,D1
     TRAP    #15
    
 *----PRINT COMMA----
@@ -1213,10 +1205,10 @@ PRINT_Dn_EA
 *----EA OUTPUT----
     MOVE.W  D7,D6
     AND.W   #$003F,D6
-    MOVEM.W D7/A5/A6,-(SP)
+
     JSR     DeAddr              ;PRINT EA
     
-    MOVEM.W (SP)+,D7,A5,A6
+
 *----NEW LINE----
     LEA     new_line,A1
     MOVE.B  #14,D0
@@ -1530,7 +1522,7 @@ PRINT_DATA
     MOVE.B  #14,D0
     TRAP    #15  
     
-    BRA     PRIMELOOP
+    JMP     PRIMELOOP
     
     
 ENDPROGRAM
@@ -1575,12 +1567,12 @@ MOVEMread      JSR DeAddr
 ENDMOVEMfunc    RTS    
 SIMHALT             ; halt simulator
 
-printMOVEM  LEA     MOVEM,A1
+printMOVEM  LEA     MESSAGE_MOVEM,A1
         MOVE.B  #14,D0
         TRAP    #15
         RTS
 
-printTAP  LEA     MOVEM,A1
+printTAP  LEA     MESSAGE_MOVEM,A1
         MOVE.B  #14,D0
         TRAP    #15
         RTS
@@ -2014,6 +2006,8 @@ CR              EQU     $0D
 LF              EQU     $0A
 
 *----------------------Daniel Variables--------------------------------
+SP                  EQU    $00000999
+
 MESSAGE_ADD         DC.B    'ADD',0
 MESSAGE_ADDA        DC.B    'ADDA',0
 MESSAGE_AND         DC.B    'AND',0
@@ -2026,7 +2020,6 @@ MESSAGE_ADDQ        DC.B    'ADDQ',0
 MESSAGE_MOVE        DC.B    'MOVE',0
 MESSAGE_MOVEQ       DC.B    'MOVEQ',0
 MESSAGE_MOVEA       DC.B    'MOVEA',0
-MESSAGE_MOVEM       DC.B    'MOVEM',0
 MESSAGE_NOP         DC.B    'NOP',CR,LF,0
 MESSAGE_RTS         DC.B    'RTS',CR,LF,0
 
@@ -2079,13 +2072,12 @@ COMMA DC.B ' , ',0
 SLASH DC.B '/',0
 
 EA  DC.B    '<EA>',0
-MOVEM   DC.B  'MOVEM',0
+MESSAGE_MOVEM   DC.B  'MOVEM',0
 TAP DC.B    '   ',0
 
 dotw    DC.B    '.W',0
 
     END    START        ; last line of source
-
 
 *~Font name~Courier New~
 *~Font size~10~
