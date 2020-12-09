@@ -1952,13 +1952,11 @@ TEMPADDR    AND #7,D3
     BRA EndDeAddr
     
 WORDADDR MOVE.W (A5)+,D1
-    MOVE.W  D3,D1
     MOVE.B  #3,D0
     TRAP    #15
     BRA EndDeAddr
     
 LONGADDR    MOVE.L (A5)+,D1
-    MOVE.W  D3,D1
     MOVE.B  #3,D0
     TRAP    #15
     BRA EndDeAddr
@@ -1967,7 +1965,6 @@ IMMEADDR    LEA     NumSign,A1
         MOVE.B  #14,D0
         TRAP    #15
     MOVE.W (A5)+,D1
-    MOVE.W  D3,D1
     MOVE.B  #3,D0
     TRAP    #15
     BRA EndDeAddr
@@ -2071,6 +2068,7 @@ TAP DC.B    '   ',0
 dotw    DC.B    '.W',0
 
     END    START        ; last line of source
+
 
 
 
