@@ -1951,19 +1951,13 @@ TEMPADDR    AND #7,D3
     BRA IMMEADDR
     BRA EndDeAddr
     
-WORDADDR MOVE A1,D3
-    ADD #$4,A1 
-    *MOVE.B  #4,D0 ; assuming getting data from next line
-    *TRAP    #15
+WORDADDR MOVE.W (A5)+,D1
     MOVE.W  D3,D1
     MOVE.B  #3,D0
     TRAP    #15
     BRA EndDeAddr
     
-LONGADDR    MOVE A1,D3
-    ADD #$4,A1 
-*MOVE.B  #4,D0 ; assuming getting data from next line
-*    TRAP    #15
+LONGADDR    MOVE.L (A5)+,D1
     MOVE.W  D3,D1
     MOVE.B  #3,D0
     TRAP    #15
@@ -1972,8 +1966,7 @@ LONGADDR    MOVE A1,D3
 IMMEADDR    LEA     NumSign,A1
         MOVE.B  #14,D0
         TRAP    #15
-    MOVE A1,D3
-    ADD #$4,A1
+    MOVE.W (A5)+,D1
     MOVE.W  D3,D1
     MOVE.B  #3,D0
     TRAP    #15
@@ -2078,6 +2071,8 @@ TAP DC.B    '   ',0
 dotw    DC.B    '.W',0
 
     END    START        ; last line of source
+
+
 
 *~Font name~Courier New~
 *~Font size~10~
