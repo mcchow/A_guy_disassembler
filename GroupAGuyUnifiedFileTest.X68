@@ -12,12 +12,12 @@ START:                  ; first instruction of program
     *MOVE.W ,intput_end
     MOVE.W  #$4E71,(A1)+        ;NOP
     MOVE.W  #$4E75,(A1)+        ;RTS
-    MOVE.W  #$D07C,(A1)+        ;ADD
+    MOVE.L  #$D07C4000,(A1)+        ;ADD
     MOVE.W  #$D2FC,(A1)+        ;ADDA
     MOVE.W  #$5A00,(A1)+        ;ADDQ
     MOVE.W  #$9CD4,(A1)+        ;SUB
     MOVE.W  #$1200,(A1)+        ;MOVE
-    MOVE.W  #$327C,(A1)+        ;MOVEA
+    MOVE.L  #$327C0500,(A1)+        ;MOVEA
     MOVE.W  #$7E49,(A1)+        ;MOVEQ
     *MOVE.L  #$48910001,(A1)+        ;MOVEM
     MOVE.L  #$60000036,(A1)+        ;BRA
@@ -29,18 +29,19 @@ START:                  ; first instruction of program
     MOVE.W  #$E99B,(A1)+        ;ROL
     MOVE.W  #$EA9B,(A1)+        ;ROR
     MOVE.W  #$4E91,(A1)+        ;JSR
-    MOVE.W  #$45F9,(A1)+        ;LEA
-    MOVE.L  #$DC00FF00,(A1)+        ;LEA PT 2
+    *MOVE.W  #$45F9,(A1)+        ;LEA
+    *MOVE.L  #$DC00FF00,(A1)+        ;LEA PT 2
     MOVE.W  #$BA13,(A1)+        ;CMP
     MOVE.W  #$67FC,(A1)+        ;BEQ
     MOVE.W  #$6EFA,(A1)+        ;BGT
     MOVE.W  #$6FF8,(A1)+        ;BLE
-    MOVE.W  A1,input_end
-
+    *MOVEA.L #$00006032,A1
+    MOVE.L  #$00006032,input_end
 
 OPSETUP
     MOVEA.L input_start,A5
     MOVEA.L input_end,A6
+    *SUB.L   #$16,A6
     
     JMP     PRIMELOOP
     
@@ -225,10 +226,68 @@ PROCESS_MOVEA
     ROL.W   #4,D6
     
     CMP.B   #3,D6
-    BEQ     PRINT_MOVE_WORD
+    BEQ     PRINT_MOVEA_WORD
     
     CMP.B   #2,D6
-    BEQ     PRINT_MOVE_LONG
+    BEQ     PRINT_MOVEA_LONG
+    
+*--------------------------------------------
+*PROCESS OUTPUT FOR MOVEA WORD
+*D7 = ORIGINAL WORD OF MEMORY 
+PRINT_MOVEA_WORD
+*----I/O----
+    LEA     MESSAGE_WORD,A1
+    MOVE.B  #14,D0
+    TRAP    #15
+    
+    BRA     PRINT_MOVEA_EA
+    
+*--------------------------------------------
+*PROCESS OUTPUT FOR MOVEA LONG
+*D7 = ORIGINAL WORD OF MEMORY 
+PRINT_MOVEA_LONG
+*----I/O----
+    LEA     MESSAGE_LONG,A1
+    MOVE.B  #14,D0
+    TRAP    #15
+    
+    BRA     PRINT_MOVEA_EA
+    
+*--------------------------------------------
+*PROCESS OUTPUT FOR MOVEA EA
+*D7 = ORIGINAL WORD OF MEMORY 
+PRINT_MOVEA_EA
+*----PRINT SOURCE EA----
+    MOVE.W  D7,D6
+    AND.W   #$003F,D6
+    JSR     DeAddr              ;PRINT EA
+
+    
+*----COMMA----
+    LEA     MESSAGE_COMMA,A1
+    MOVE.B  #14,D0
+    TRAP    #15
+    
+*----PRINT DESTINATION EA----
+    LEA     MESSAGE_ADDRESS,A1
+    MOVE.B  #14,D0
+    TRAP    #15
+    
+    MOVE.W  D7,D6
+    AND.W   #$0E00,D6
+    ROL.W   #$7,D6
+    MOVE.L  D6,D1
+    MOVE.B  #15,D0
+    MOVE.B  #10,D2
+    TRAP    #15
+    
+    
+*----NEW LINE----
+    LEA     new_line,A1
+    MOVE.B  #14,D0
+    TRAP    #15  
+    
+    BRA     PRIMELOOP 
     
 *--------------------------------------------
 *PROCESS OUTPUT FOR MOVE
@@ -322,7 +381,7 @@ PRINT_MOVE_BYTE
     BRA     PRINT_MOVE_EA
     
 *--------------------------------------------
-*PROCESS OUTPUT FOR MOVE & MOVEA WORD
+*PROCESS OUTPUT FOR MOVE WORD
 *D7 = ORIGINAL WORD OF MEMORY 
 PRINT_MOVE_WORD
 *----I/O----
@@ -333,7 +392,7 @@ PRINT_MOVE_WORD
     BRA     PRINT_MOVE_EA
     
 *--------------------------------------------
-*PROCESS OUTPUT FOR MOVE & MOVEA LONG
+*PROCESS OUTPUT FOR MOVE LONG
 *D7 = ORIGINAL WORD OF MEMORY 
 PRINT_MOVE_LONG
 *----I/O----
@@ -344,7 +403,7 @@ PRINT_MOVE_LONG
     BRA     PRINT_MOVE_EA
     
 *--------------------------------------------
-*PROCESS OUTPUT FOR MOVE & MOVEA EA
+*PROCESS OUTPUT FOR MOVE EA
 *D7 = ORIGINAL WORD OF MEMORY 
 PRINT_MOVE_EA
 *----PRINT SOURCE EA----
@@ -380,6 +439,8 @@ PRINT_MOVE_EA
 PROCESS_LEA
     JSR     CHECK_LEA_JSR_EA
     
+PROCESS_LEA_CORRECT
+    
 *----I/O LEA----
     LEA     MESSAGE_LEA,A1
     MOVE.B  #14,D0
@@ -388,7 +449,7 @@ PROCESS_LEA
 *----SETUP EA----
     MOVE.W  D7,D6
     AND.W   #$003F,D6
-    JMP     DeAddr              ;PRINT EA
+    JSR     DeAddr              ;PRINT EA
     
 *----COMMA----
     LEA     MESSAGE_COMMA,A1
@@ -445,13 +506,14 @@ CHECK_LEA_EA
     CMP.B   #$4,D6
     BEQ     PRINT_DATA
     
-    RTS
+    JMP     PROCESS_LEA_CORRECT
 *++++++++++++++++++++++++++++++++++JSR+++++++++++++++++++
 *--------------------------------------------
 *PROCESS OUTPUT FOR JSR
 *D7 = ORIGINAL WORD OF MEMORY 
 PROCESS_JSR
-    JMP     CHECK_LEA_JSR_EA        ;CHECK THAT EA IS VALID
+    JMP     CHECK_JSR_EA        ;CHECK THAT EA IS VALID
+PROCESS_JSR_CORRECT
 *----I/O JSR----
     LEA     MESSAGE_JSR,A1
     MOVE.B  #14,D0
@@ -460,7 +522,7 @@ PROCESS_JSR
 *----SETUP EA----
     MOVE.W  D7,D6
     AND.W   #$003F,D6
-    JMP     DeAddr              ;PRINT EA
+    JSR     DeAddr              ;PRINT EA
     
 
 *----NEW LINE----
@@ -470,6 +532,37 @@ PROCESS_JSR
     
     BRA     PRIMELOOP
    
+*--------------------------------------------
+*CHECK IF LEA & JSR ea IS VALID
+*D7 = ORIGINAL WORD OF MEMORY
+CHECK_JSR_EA
+*----CHECK INVALID EA----
+    MOVE.W  D7,D6
+    AND.W   #$0038,D6
+    LSR.B   #$3,D6
+    
+    CMP.B   #$2,D6          ;IF Dn OR An
+    BLT     PRINT_DATA
+    
+    CMP.B   #$3,D6          ;IF (An)+
+    BEQ     PRINT_DATA
+    
+    CMP.B   #$4,D6          ;IF -(An)
+    BEQ     PRINT_DATA
+    
+    CMP.B   #$7,D6          ;IF EA MODE == #7
+    BEQ     CHECK_JSR_EA_TWO  
+*--------------------------------------------
+*CHECK IF LEA ea IS VALID WHEN MODE == %111
+*D7 = ORIGINAL WORD OF MEMORY 
+CHECK_JSR_EA_TWO
+    MOVE.W  D7,D6
+    AND.W   #$0007,D6
+    
+    CMP.B   #$4,D6
+    BEQ     PRINT_DATA
+    
+    JMP     PROCESS_JSR_CORRECT
 *++++++++++++++++++++++++++++++++++NOT+++++++++++++++++++
 *--------------------------------------------
 *PROCESS OUTPUT FOR NOT
@@ -1745,7 +1838,13 @@ PRINTNUM LEA NUM,A1
     BRA     DEFINEDIS
 
 ENDOFLR MOVE D6,D5
-    RTS
+
+*----NEW LINE----
+    LEA     new_line,A1
+    MOVE.B  #14,D0
+    TRAP    #15  
+    
+    JMP     PRIMELOOP
 *----------------------EA--------------------------------
 * Assuming address is in D1
     
@@ -1836,20 +1935,12 @@ TEMPADDR    AND #7,D3
     BRA IMMEADDR
     BRA EndDeAddr
     
-WORDADDR MOVE A1,D3
-    ADD #$4,A1 
-    *MOVE.B  #4,D0 ; assuming getting data from next line
-    *TRAP    #15
-    MOVE.W  D3,D1
+WORDADDR MOVE.W (A5)+,D1
     MOVE.B  #3,D0
     TRAP    #15
     BRA EndDeAddr
     
-LONGADDR    MOVE A1,D3
-    ADD #$4,A1 
-*MOVE.B  #4,D0 ; assuming getting data from next line
-*    TRAP    #15
-    MOVE.W  D3,D1
+LONGADDR    MOVE.L (A5)+,D1
     MOVE.B  #3,D0
     TRAP    #15
     BRA EndDeAddr
@@ -1857,9 +1948,7 @@ LONGADDR    MOVE A1,D3
 IMMEADDR    LEA     NumSign,A1
         MOVE.B  #14,D0
         TRAP    #15
-    MOVE A1,D3
-    ADD #$4,A1
-    MOVE.W  D3,D1
+    MOVE.W (A5)+,D1
     MOVE.B  #3,D0
     TRAP    #15
     BRA EndDeAddr
@@ -1908,21 +1997,21 @@ MESSAGE_MOVEA       DC.B    'MOVEA',0
 MESSAGE_NOP         DC.B    'NOP',CR,LF,0
 MESSAGE_RTS         DC.B    'RTS',CR,LF,0
 
-MESSAGE_BRA       DC.B    'BRA',0
-MESSAGE_BHI       DC.B    'BHI',0
-MESSAGE_BLS       DC.B    'BLS',0
-MESSAGE_BCC       DC.B    'BCC',0
-MESSAGE_BCS       DC.B    'BCS',0
-MESSAGE_BNE       DC.B    'BNE',0
-MESSAGE_BEQ       DC.B    'BEQ',0
-MESSAGE_BVC       DC.B    'BVC',0
-MESSAGE_BVS       DC.B    'BVS',0
-MESSAGE_BPL       DC.B    'BPL',0
-MESSAGE_BMI       DC.B    'BMI',0
-MESSAGE_BGE       DC.B    'BGE',0
-MESSAGE_BLT       DC.B    'BLT',0
-MESSAGE_BGT       DC.B    'BGT',0
-MESSAGE_BLE       DC.B    'BLE',0
+MESSAGE_BRA       DC.B    'BRA     ',0
+MESSAGE_BHI       DC.B    'BHI     ',0
+MESSAGE_BLS       DC.B    'BLS     ',0
+MESSAGE_BCC       DC.B    'BCC     ',0
+MESSAGE_BCS       DC.B    'BCS     ',0
+MESSAGE_BNE       DC.B    'BNE     ',0
+MESSAGE_BEQ       DC.B    'BEQ     ',0
+MESSAGE_BVC       DC.B    'BVC     ',0
+MESSAGE_BVS       DC.B    'BVS     ',0
+MESSAGE_BPL       DC.B    'BPL     ',0
+MESSAGE_BMI       DC.B    'BMI     ',0
+MESSAGE_BGE       DC.B    'BGE     ',0
+MESSAGE_BLT       DC.B    'BLT     ',0
+MESSAGE_BGT       DC.B    'BGT     ',0
+MESSAGE_BLE       DC.B    'BLE     ',0
 
 MESSAGE_HEX         DC.B    '#$',0
 MESSAGE_BYTE        DC.B    '.B    ',0

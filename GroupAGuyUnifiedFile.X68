@@ -156,6 +156,7 @@ load_end_addr
 OPSETUP
     MOVEA.L input_start,A5
     MOVEA.L input_end,A6
+    *SUB.L   #$16,A6
     
     JMP     PRIMELOOP
     
@@ -340,10 +341,68 @@ PROCESS_MOVEA
     ROL.W   #4,D6
     
     CMP.B   #3,D6
-    BEQ     PRINT_MOVE_WORD
+    BEQ     PRINT_MOVEA_WORD
     
     CMP.B   #2,D6
-    BEQ     PRINT_MOVE_LONG
+    BEQ     PRINT_MOVEA_LONG
+    
+*--------------------------------------------
+*PROCESS OUTPUT FOR MOVEA WORD
+*D7 = ORIGINAL WORD OF MEMORY 
+PRINT_MOVEA_WORD
+*----I/O----
+    LEA     MESSAGE_WORD,A1
+    MOVE.B  #14,D0
+    TRAP    #15
+    
+    BRA     PRINT_MOVEA_EA
+    
+*--------------------------------------------
+*PROCESS OUTPUT FOR MOVEA LONG
+*D7 = ORIGINAL WORD OF MEMORY 
+PRINT_MOVEA_LONG
+*----I/O----
+    LEA     MESSAGE_LONG,A1
+    MOVE.B  #14,D0
+    TRAP    #15
+    
+    BRA     PRINT_MOVEA_EA
+    
+*--------------------------------------------
+*PROCESS OUTPUT FOR MOVEA EA
+*D7 = ORIGINAL WORD OF MEMORY 
+PRINT_MOVEA_EA
+*----PRINT SOURCE EA----
+    MOVE.W  D7,D6
+    AND.W   #$003F,D6
+    JSR     DeAddr              ;PRINT EA
+
+    
+*----COMMA----
+    LEA     MESSAGE_COMMA,A1
+    MOVE.B  #14,D0
+    TRAP    #15
+    
+*----PRINT DESTINATION EA----
+    LEA     MESSAGE_ADDRESS,A1
+    MOVE.B  #14,D0
+    TRAP    #15
+    
+    MOVE.W  D7,D6
+    AND.W   #$0E00,D6
+    ROL.W   #$7,D6
+    MOVE.L  D6,D1
+    MOVE.B  #15,D0
+    MOVE.B  #10,D2
+    TRAP    #15
+    
+    
+*----NEW LINE----
+    LEA     new_line,A1
+    MOVE.B  #14,D0
+    TRAP    #15  
+    
+    BRA     PRIMELOOP 
     
 *--------------------------------------------
 *PROCESS OUTPUT FOR MOVE
@@ -437,7 +496,7 @@ PRINT_MOVE_BYTE
     BRA     PRINT_MOVE_EA
     
 *--------------------------------------------
-*PROCESS OUTPUT FOR MOVE & MOVEA WORD
+*PROCESS OUTPUT FOR MOVE WORD
 *D7 = ORIGINAL WORD OF MEMORY 
 PRINT_MOVE_WORD
 *----I/O----
@@ -448,7 +507,7 @@ PRINT_MOVE_WORD
     BRA     PRINT_MOVE_EA
     
 *--------------------------------------------
-*PROCESS OUTPUT FOR MOVE & MOVEA LONG
+*PROCESS OUTPUT FOR MOVE LONG
 *D7 = ORIGINAL WORD OF MEMORY 
 PRINT_MOVE_LONG
 *----I/O----
@@ -459,7 +518,7 @@ PRINT_MOVE_LONG
     BRA     PRINT_MOVE_EA
     
 *--------------------------------------------
-*PROCESS OUTPUT FOR MOVE & MOVEA EA
+*PROCESS OUTPUT FOR MOVE EA
 *D7 = ORIGINAL WORD OF MEMORY 
 PRINT_MOVE_EA
 *----PRINT SOURCE EA----
@@ -495,6 +554,8 @@ PRINT_MOVE_EA
 PROCESS_LEA
     JSR     CHECK_LEA_JSR_EA
     
+PROCESS_LEA_CORRECT
+    
 *----I/O LEA----
     LEA     MESSAGE_LEA,A1
     MOVE.B  #14,D0
@@ -503,7 +564,7 @@ PROCESS_LEA
 *----SETUP EA----
     MOVE.W  D7,D6
     AND.W   #$003F,D6
-    JMP     DeAddr              ;PRINT EA
+    JSR     DeAddr              ;PRINT EA
     
 *----COMMA----
     LEA     MESSAGE_COMMA,A1
@@ -560,13 +621,14 @@ CHECK_LEA_EA
     CMP.B   #$4,D6
     BEQ     PRINT_DATA
     
-    RTS
+    JMP     PROCESS_LEA_CORRECT
 *++++++++++++++++++++++++++++++++++JSR+++++++++++++++++++
 *--------------------------------------------
 *PROCESS OUTPUT FOR JSR
 *D7 = ORIGINAL WORD OF MEMORY 
 PROCESS_JSR
-    JMP     CHECK_LEA_JSR_EA        ;CHECK THAT EA IS VALID
+    JMP     CHECK_JSR_EA        ;CHECK THAT EA IS VALID
+PROCESS_JSR_CORRECT
 *----I/O JSR----
     LEA     MESSAGE_JSR,A1
     MOVE.B  #14,D0
@@ -575,7 +637,7 @@ PROCESS_JSR
 *----SETUP EA----
     MOVE.W  D7,D6
     AND.W   #$003F,D6
-    JMP     DeAddr              ;PRINT EA
+    JSR     DeAddr              ;PRINT EA
     
 
 *----NEW LINE----
@@ -585,6 +647,37 @@ PROCESS_JSR
     
     BRA     PRIMELOOP
    
+*--------------------------------------------
+*CHECK IF LEA & JSR ea IS VALID
+*D7 = ORIGINAL WORD OF MEMORY
+CHECK_JSR_EA
+*----CHECK INVALID EA----
+    MOVE.W  D7,D6
+    AND.W   #$0038,D6
+    LSR.B   #$3,D6
+    
+    CMP.B   #$2,D6          ;IF Dn OR An
+    BLT     PRINT_DATA
+    
+    CMP.B   #$3,D6          ;IF (An)+
+    BEQ     PRINT_DATA
+    
+    CMP.B   #$4,D6          ;IF -(An)
+    BEQ     PRINT_DATA
+    
+    CMP.B   #$7,D6          ;IF EA MODE == #7
+    BEQ     CHECK_JSR_EA_TWO  
+*--------------------------------------------
+*CHECK IF LEA ea IS VALID WHEN MODE == %111
+*D7 = ORIGINAL WORD OF MEMORY 
+CHECK_JSR_EA_TWO
+    MOVE.W  D7,D6
+    AND.W   #$0007,D6
+    
+    CMP.B   #$4,D6
+    BEQ     PRINT_DATA
+    
+    JMP     PROCESS_JSR_CORRECT
 *++++++++++++++++++++++++++++++++++NOT+++++++++++++++++++
 *--------------------------------------------
 *PROCESS OUTPUT FOR NOT
@@ -1860,7 +1953,13 @@ PRINTNUM LEA NUM,A1
     BRA     DEFINEDIS
 
 ENDOFLR MOVE D6,D5
-    RTS
+
+*----NEW LINE----
+    LEA     new_line,A1
+    MOVE.B  #14,D0
+    TRAP    #15  
+    
+    JMP     PRIMELOOP
 *----------------------EA--------------------------------
 * Assuming address is in D1
     
@@ -2013,21 +2112,21 @@ MESSAGE_MOVEA       DC.B    'MOVEA',0
 MESSAGE_NOP         DC.B    'NOP',CR,LF,0
 MESSAGE_RTS         DC.B    'RTS',CR,LF,0
 
-MESSAGE_BRA       DC.B    'BRA',0
-MESSAGE_BHI       DC.B    'BHI',0
-MESSAGE_BLS       DC.B    'BLS',0
-MESSAGE_BCC       DC.B    'BCC',0
-MESSAGE_BCS       DC.B    'BCS',0
-MESSAGE_BNE       DC.B    'BNE',0
-MESSAGE_BEQ       DC.B    'BEQ',0
-MESSAGE_BVC       DC.B    'BVC',0
-MESSAGE_BVS       DC.B    'BVS',0
-MESSAGE_BPL       DC.B    'BPL',0
-MESSAGE_BMI       DC.B    'BMI',0
-MESSAGE_BGE       DC.B    'BGE',0
-MESSAGE_BLT       DC.B    'BLT',0
-MESSAGE_BGT       DC.B    'BGT',0
-MESSAGE_BLE       DC.B    'BLE',0
+MESSAGE_BRA       DC.B    'BRA     ',0
+MESSAGE_BHI       DC.B    'BHI     ',0
+MESSAGE_BLS       DC.B    'BLS     ',0
+MESSAGE_BCC       DC.B    'BCC     ',0
+MESSAGE_BCS       DC.B    'BCS     ',0
+MESSAGE_BNE       DC.B    'BNE     ',0
+MESSAGE_BEQ       DC.B    'BEQ     ',0
+MESSAGE_BVC       DC.B    'BVC     ',0
+MESSAGE_BVS       DC.B    'BVS     ',0
+MESSAGE_BPL       DC.B    'BPL     ',0
+MESSAGE_BMI       DC.B    'BMI     ',0
+MESSAGE_BGE       DC.B    'BGE     ',0
+MESSAGE_BLT       DC.B    'BLT     ',0
+MESSAGE_BGT       DC.B    'BGT     ',0
+MESSAGE_BLE       DC.B    'BLE     ',0
 
 MESSAGE_HEX         DC.B    '#$',0
 MESSAGE_BYTE        DC.B    '.B    ',0
@@ -2068,9 +2167,6 @@ TAP DC.B    '   ',0
 dotw    DC.B    '.W',0
 
     END    START        ; last line of source
-
-
-
 
 *~Font name~Courier New~
 *~Font size~10~
