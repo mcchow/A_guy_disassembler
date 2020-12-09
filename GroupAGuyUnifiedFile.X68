@@ -464,7 +464,7 @@ PRINT_MOVE_EA
     MOVE.W  D7,D6
     AND.W   #$003F,D6
     MOVEM.W D7/A5/A6,-(SP)
-    JMP     DeAddr              ;PRINT EA
+    JSR     DeAddr              ;PRINT EA
     
     MOVEM.W (SP)+,D7/A5/A6
     
@@ -478,7 +478,7 @@ PRINT_MOVE_EA
     AND.W   #$0FC0,D6  
     LSR.W   #6,D6
     MOVEM.W D7/A5/A6,-(SP)
-    JMP     DeAddr              ;PRINT EA
+    JSR     DeAddr              ;PRINT EA
     
     MOVEM.W (SP)+,D7/A5/A6
     
@@ -824,7 +824,7 @@ PROCESS_ADDA_WORD
     MOVE.W  D7,D6
     AND.W   #$003F,D6
     MOVEM.W D7/A5/A6,-(SP)
-    JMP     DeAddr              ;PRINT EA
+    JSR     DeAddr              ;PRINT EA
     
 *----PRINT COMMA----
     LEA MESSAGE_COMMA,A1
@@ -842,7 +842,7 @@ PROCESS_ADDA_WORD
     AND.W   #$0E00,D6
     ROL.W   #$7,D6
     MOVE.B  #3,D0
-    MOVE.B  D6,D1
+    MOVE.W  D6,D1
     TRAP    #15
     
 *----NEW LINE----
@@ -865,7 +865,7 @@ PROCESS_ADDA_LONG
     MOVE.W  D7,D6
     AND.W   #$003F,D6
     MOVEM.W D7/A5/A6,-(SP)
-    JMP     DeAddr              ;PRINT EA
+    JSR     DeAddr              ;PRINT EA
     
 *----PRINT COMMA----
     LEA MESSAGE_COMMA,A1
@@ -883,7 +883,7 @@ PROCESS_ADDA_LONG
     AND.W   #$0E00,D6
     ROL.W   #$7,D6
     MOVE.B  #3,D0
-    MOVE.B  D6,D1
+    MOVE.W  D6,D1
     TRAP    #15
     
 *----NEW LINE----
@@ -1027,17 +1027,6 @@ PRINT_ADDQ_DATA
     TRAP    #15
     
     
-*----EA----
-    MOVE.W  D7,D6
-    AND.W   #$003F,D6
-    MOVEM.W D7/A5/A6,-(SP)
-    JMP     DeAddr              ;PRINT EA
-    
-*----COMMA----
-    LEA     MESSAGE_COMMA,A1
-    MOVE.B  #14,D0
-    TRAP    #15
-    
 *----register----
     MOVEM.W (SP)+,D7,A5,A6
     MOVE.W  D7,D6
@@ -1047,6 +1036,18 @@ PRINT_ADDQ_DATA
     MOVE.B  #15,D0
     MOVE.B  #16,D2
     TRAP    #15
+    
+*----COMMA----
+    LEA     MESSAGE_COMMA,A1
+    MOVE.B  #14,D0
+    TRAP    #15
+   
+*----EA----
+    MOVE.W  D7,D6
+    AND.W   #$003F,D6
+    MOVEM.W D7/A5/A6,-(SP)
+    JSR     DeAddr              ;PRINT EA
+
     
 *----NEW LINE----
     LEA     new_line,A1
@@ -1125,7 +1126,7 @@ PRINT_EA_Dn
     MOVE.W  D7,D6
     AND.W   #$003F,D6
     MOVEM.W D7/A5/A6,-(SP)
-    JMP     DeAddr              ;PRINT EA
+    JSR     DeAddr              ;PRINT EA
     
 *----PRINT COMMA----
     LEA MESSAGE_COMMA,A1
@@ -1143,7 +1144,7 @@ PRINT_EA_Dn
     AND.W   #$0E00,D6
     ROL.W   #$7,D6
     MOVE.B  #3,D0
-    MOVE.B  D6,D1
+    MOVE.W  D6,D1
     TRAP    #15
     
 *----NEW LINE----
@@ -1201,7 +1202,7 @@ PRINT_Dn_EA
     AND.W   #$0E00,D6
     ROL.W   #$7,D6
     MOVE.B  #3,D0
-    MOVE.B  D6,D1
+    MOVE.W  D6,D1
     TRAP    #15
    
 *----PRINT COMMA----
@@ -1213,7 +1214,7 @@ PRINT_Dn_EA
     MOVE.W  D7,D6
     AND.W   #$003F,D6
     MOVEM.W D7/A5/A6,-(SP)
-    JMP     DeAddr              ;PRINT EA
+    JSR     DeAddr              ;PRINT EA
     
     MOVEM.W (SP)+,D7,A5,A6
 *----NEW LINE----
@@ -1593,7 +1594,9 @@ PRINTSIZEDW  LEA     dotw,A1
         RTS  
   
         
-FirstD  CMP #8,D1
+FirstD  
+    MOVE.L  #$0,D1
+    CMP #8,D1
     BEQ FirstAST
     MOVE D6,D5
 
