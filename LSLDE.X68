@@ -7,10 +7,6 @@
     ORG    $1000
 START:                  ; first instruction of program
 
-* Put program code here
-    lsR.b     #$02,d0
-    lsl.w     #$04,d2
-    lsl.w     $00FF0000
 *TEST only , getting input
     MOVE.B  #4,D0
     TRAP    #15
@@ -32,7 +28,7 @@ MSLS    * LS, AS, RO
     BEQ PRINTLSM
     CMP #0,D6
     BEQ PRINTASM
-    CMP #2,D6
+    CMP #3,D6
     BEQ PRINTROM
 
 MSLR    MOVE D7,D6
@@ -76,7 +72,7 @@ NormalLS    MOVE D7,D6
     BEQ PRINTLS
     CMP #0,D6
     BEQ PRINTAS
-    CMP #2,D6
+    CMP #3,D6
     BEQ PRINTRO
     
 * left or right
@@ -96,7 +92,11 @@ DefineSIZE    MOVE D7,D6
     BEQ PRINTSIZEW
 
 *D# OR # IE: LSL.R (d# / #)
-DEFINENUM MOVE D7,D6
+DEFINENUM 
+    LEA tap,A1
+    MOVE.B  #14,D0
+    TRAP    #15
+    MOVE D7,D6
     AND #16,D6
     CMP #0,D6
     BEQ PRINTNUM
@@ -176,8 +176,10 @@ SizeB DC.B    '.B ',0
 SizeW DC.B  '.W ',0
 NUM DC.B '#',0
 COMMA DC.B ' , ',0
+Tap DC.B '   ',0
 
     END    START        ; last line of source
+
 
 
 
