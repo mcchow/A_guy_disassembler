@@ -35,6 +35,7 @@ MOVEMwrite  MOVE A5,D6
     ADD #16,A5
     JSR FirstD
     JSR printcomma
+    MOVE D7,D6
     JSR DeAddr
     BRA ENDMOVEMfunc
 MOVEMread      JSR DeAddr
@@ -69,12 +70,13 @@ PRINTSIZEDW  LEA     dotw,A1
 * Put variables and constants here
 *this EA just test only , need to replace by real effective address code
 EA  DC.B    '<EA>',0
-MOVEM   DC.B  'MOVEM',0
+MMOVEM   DC.B  'MOVEM',0
 TAP DC.B    '   ',0
 comma DC.B  ',',0
 dotw    DC.B    '.W',0
 
     END    START        ; last line of source
+
 
 
 
