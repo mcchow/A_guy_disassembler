@@ -1658,7 +1658,6 @@ MOVEMread      JSR DeAddr
     
 
 ENDMOVEMfunc    RTS    
-SIMHALT             ; halt simulator
 
 printMOVEM  LEA     MESSAGE_MOVEM,A1
         MOVE.B  #14,D0
@@ -1822,7 +1821,7 @@ MSLS    * LS, AS, RO
     BEQ PRINTLSM
     CMP #0,D6
     BEQ PRINTASM
-    CMP #2,D6
+    CMP #3,D6
     BEQ PRINTROM
 
 MSLR    MOVE D7,D6
@@ -1866,7 +1865,7 @@ NormalLS    MOVE D7,D6
     BEQ PRINTLS
     CMP #0,D6
     BEQ PRINTAS
-    CMP #2,D6
+    CMP #3,D6
     BEQ PRINTRO
     
 * left or right
@@ -1884,6 +1883,7 @@ DefineSIZE    MOVE D7,D6
     BEQ PRINTSIZEB
     CMP #1,D6
     BEQ PRINTSIZEW
+    BRA PRINTSIZEL
 
 *D# OR # IE: LSL.R (d# / #)
 DEFINENUM MOVE D7,D6
@@ -1917,7 +1917,7 @@ PRINTAS LEA     AS,A1
 PRINTRO LEA     RO,A1
     MOVE.B  #14,D0
     TRAP    #15
-    BRA LRDefine
+    BRA LRDefine    
 PRINTL LEA     L,A1
     MOVE.B  #14,D0
     TRAP    #15
@@ -1931,6 +1931,10 @@ PRINTSIZEB LEA     SizeB,A1
     TRAP    #15
     BRA DEFINENUM
 PRINTSIZEW LEA     SizeW,A1
+    MOVE.B  #14,D0
+    TRAP    #15
+    BRA DEFINENUM
+PRINTSIZEL  LEA     SizeL,A1
     MOVE.B  #14,D0
     TRAP    #15
     BRA DEFINENUM
@@ -2155,6 +2159,7 @@ L DC.B    'L',0
 R DC.B    'R',0
 SizeB DC.B    '.B ',0
 SizeW DC.B  '.W ',0
+SizeL DC.B  '.L ',0
 NUM DC.B '#',0
 COMMA DC.B ' , ',0
 
@@ -2167,6 +2172,7 @@ TAP DC.B    '   ',0
 dotw    DC.B    '.W',0
 
     END    START        ; last line of source
+
 
 *~Font name~Courier New~
 *~Font size~10~
