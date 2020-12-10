@@ -13,7 +13,7 @@ START:                  ; first instruction of program
     MOVE.W  #$4E71,(A1)+        ;NOP
     MOVE.W  #$4E75,(A1)+        ;RTS
     MOVE.L  #$D07C4000,(A1)+        ;ADD
-    MOVE.W  #$D2FC,(A1)+        ;ADDA
+    MOVE.L  #$D2FC0020,(A1)+        ;ADDA
     MOVE.W  #$5A00,(A1)+        ;ADDQ
     MOVE.W  #$9CD4,(A1)+        ;SUB
     MOVE.W  #$1200,(A1)+        ;MOVE
@@ -29,14 +29,14 @@ START:                  ; first instruction of program
     MOVE.W  #$E99B,(A1)+        ;ROL
     MOVE.W  #$EA9B,(A1)+        ;ROR
     MOVE.W  #$4E91,(A1)+        ;JSR
-    *MOVE.W  #$45F9,(A1)+        ;LEA
-    *MOVE.L  #$DC00FF00,(A1)+        ;LEA PT 2
+    MOVE.W  #$45F9,(A1)+        ;LEA
+    MOVE.L  #$DC00FF00,(A1)+        ;LEA PT 2
     MOVE.W  #$BA13,(A1)+        ;CMP
     MOVE.W  #$67FC,(A1)+        ;BEQ
     MOVE.W  #$6EFA,(A1)+        ;BGT
     MOVE.W  #$6FF8,(A1)+        ;BLE
     *MOVEA.L #$00006032,A1
-    MOVE.L  #$00006032,input_end
+    MOVE.L  #$0000603A,input_end
 
 OPSETUP
     MOVEA.L input_start,A5
@@ -69,6 +69,7 @@ PRIMELOOP
     CMP.B   #%11,D6         ;IF FIRST BITS 11
     BEQ     ONEONE
     
+    JMP     PRINT_DATA
 
 *--------------------------------------------
 *MOVE & MOVEA
@@ -1543,7 +1544,6 @@ MOVEMread      JSR DeAddr
     
 
 ENDMOVEMfunc    RTS    
-SIMHALT             ; halt simulator
 
 printMOVEM  LEA     MESSAGE_MOVEM,A1
         MOVE.B  #14,D0
@@ -1707,7 +1707,7 @@ MSLS    * LS, AS, RO
     BEQ PRINTLSM
     CMP #0,D6
     BEQ PRINTASM
-    CMP #2,D6
+    CMP #3,D6
     BEQ PRINTROM
 
 MSLR    MOVE D7,D6
@@ -1751,7 +1751,7 @@ NormalLS    MOVE D7,D6
     BEQ PRINTLS
     CMP #0,D6
     BEQ PRINTAS
-    CMP #2,D6
+    CMP #3,D6
     BEQ PRINTRO
     
 * left or right
@@ -1769,6 +1769,7 @@ DefineSIZE    MOVE D7,D6
     BEQ PRINTSIZEB
     CMP #1,D6
     BEQ PRINTSIZEW
+    BRA PRINTSIZEL
 
 *D# OR # IE: LSL.R (d# / #)
 DEFINENUM MOVE D7,D6
@@ -1802,7 +1803,7 @@ PRINTAS LEA     AS,A1
 PRINTRO LEA     RO,A1
     MOVE.B  #14,D0
     TRAP    #15
-    BRA LRDefine
+    BRA LRDefine    
 PRINTL LEA     L,A1
     MOVE.B  #14,D0
     TRAP    #15
@@ -1816,6 +1817,10 @@ PRINTSIZEB LEA     SizeB,A1
     TRAP    #15
     BRA DEFINENUM
 PRINTSIZEW LEA     SizeW,A1
+    MOVE.B  #14,D0
+    TRAP    #15
+    BRA DEFINENUM
+PRINTSIZEL  LEA     SizeL,A1
     MOVE.B  #14,D0
     TRAP    #15
     BRA DEFINENUM
@@ -2040,6 +2045,7 @@ L DC.B    'L',0
 R DC.B    'R',0
 SizeB DC.B    '.B ',0
 SizeW DC.B  '.W ',0
+SizeL DC.B  '.L ',0
 NUM DC.B '#',0
 COMMA DC.B ' , ',0
 

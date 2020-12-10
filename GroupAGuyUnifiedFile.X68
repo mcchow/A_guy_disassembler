@@ -184,6 +184,7 @@ PRIMELOOP
     CMP.B   #%11,D6         ;IF FIRST BITS 11
     BEQ     ONEONE
     
+    JMP     PRINT_DATA
 
 *--------------------------------------------
 *MOVE & MOVEA
@@ -2172,8 +2173,6 @@ TAP DC.B    '   ',0
 dotw    DC.B    '.W',0
 
     END    START        ; last line of source
-
-
 *~Font name~Courier New~
 *~Font size~10~
 *~Tab type~1~
