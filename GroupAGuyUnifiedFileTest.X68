@@ -156,7 +156,7 @@ put_end_in_memory
                jsr      setup_storage
                move.l   (a3),input_end  * move end address to input_end variable
                sub.b    #$1,d3          *
-               *JMP      OPSETUP * this is where we should jump to next stage
+               JMP      OPSETUP * this is where we should jump to next stage
 
 process_input
                 clr.l     d7              
@@ -235,6 +235,8 @@ ZEROZERO
     
 *----MOVE----
     BRA     PROCESS_MOVE    ;ALL OTHERS ARE MOVE
+    
+    JMP     PRINT_DATA
 
 *--------------------------------------------
 *NOP, MOVEQ, MOVEM, ADDQ, LEA, NOT, BCC, JSR, & RTS
@@ -265,6 +267,9 @@ ZEROONE
     
     CMP.B   #%11,D6
     BEQ     PROCESS_MOVEQ   ;MOVEQ
+    
+    JMP     PRINT_DATA
+
 
 *--------------------------------------------
 *SECONDARY BRANCH SUBROUTINE FOR ZEROONE
@@ -299,6 +304,9 @@ ZEROONE_SECONDARY_BRANCH
     CMP.B   #$1,D6
     BEQ     MOVEMfunc   ;MOVEM
     
+    JMP     PRINT_DATA
+
+    
 *--------------------------------------------
 *SUB, & OR
 *D7 = ORIGINAL WORD OF MEMORY
@@ -315,6 +323,9 @@ ONEZERO
 *---CHECK FOR SUB--
     CMP.B   #1,D6
     BEQ     PROCESS_SUB
+    
+    JMP     PRINT_DATA
+
     
 *--------------------------------------------
 *ADD, ADDA, AND, LSL/LSR, ASL/ASR, & ROL/ROR
@@ -336,6 +347,9 @@ ONEONE
 *CHECK FOR LSd, ASd, & ROd
     CMP.B   #$2,D6
     BEQ     startLS ;MARTIN'S WORKING ON THIS
+    
+    JMP     PRINT_DATA
+
 
 *++++++++++++++++++++++++++++++++++NOP & RTS+++++++++++++++++++
 *--------------------------------------------
@@ -1654,6 +1668,8 @@ PRINT_DATA
     
     
 ENDPROGRAM
+
+    SIMHALT
     
 
 
