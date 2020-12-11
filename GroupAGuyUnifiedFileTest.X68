@@ -1730,7 +1730,15 @@ PRINT_DATA
     JMP     PRIMELOOP
 
 
-ENDPROGRAM
+ENDPROGRAM LEA     MESSAGE_quit,A1
+    MOVE.B  #14,D0
+    TRAP    #15
+
+    MOVE.B  #5,D0
+    TRAP    #15
+    
+    MOVE.B  #9,D0
+    TRAP    #15
 
     SIMHALT
 
@@ -1758,7 +1766,7 @@ MOVEFUNCTWO
     CMP #0,D6
     BEQ MOVEMwrite
     BRA MOVEMread
-*Register to memory
+*Register to memory ( mesh ,EA)
 MOVEMwrite  MOVE.W (A5)+,D6
     MOVE #0,D1
     MOVE #0,D2
@@ -1769,6 +1777,7 @@ MOVEMwrite  MOVE.W (A5)+,D6
     MOVE.B  #14,D0
     TRAP    #15
     BRA ENDMOVEMfunc
+*memory to Register ( EA, mesh )
 MOVEMread      JSR DeAddr
     JSR printcomma
     MOVE.W (A5)+,D6
@@ -1806,7 +1815,8 @@ PRINTSIZEDL  LEA     dotl,A1
         MOVE.B  #14,D0
         TRAP    #15
         JMP     MOVEFUNCTWO
-
+*=============================================================
+* print the mesh of moveM
 FirstD
     CMP #8,D1
     BEQ FirstAST
@@ -2299,8 +2309,10 @@ TAP DC.B    '   ',0
 
 dotw    DC.B    '.W',0
 dotl    DC.B    '.L',0
+MESSAGE_quit    DC.B    'PLEASE HIT ANY KEY quit.',CR,LF,0
 
     END    START        ; last line of source
+
 
 
 
