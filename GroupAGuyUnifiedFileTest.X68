@@ -1732,6 +1732,7 @@ MOVEMfunc    JSR printMOVEM
     LSR #6,D6
     CMP #0,D6
     BEQ PRINTSIZEDW
+    BRA PRINTSIZEDL
 
 MOVEFUNCTWO
     JSR printTAP
@@ -1786,6 +1787,10 @@ PRINTSIZEDW  LEA     dotw,A1
         TRAP    #15
         JMP     MOVEFUNCTWO
 
+PRINTSIZEDL  LEA     dotl,A1
+        MOVE.B  #14,D0
+        TRAP    #15
+        JMP     MOVEFUNCTWO
 
 FirstD
     CMP #8,D1
@@ -2278,8 +2283,10 @@ MESSAGE_MOVEM   DC.B  'MOVEM',0
 TAP DC.B    '   ',0
 
 dotw    DC.B    '.W',0
+dotl    DC.B    '.L',0
 
     END    START        ; last line of source
+
 
 
 
