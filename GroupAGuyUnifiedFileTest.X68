@@ -7,8 +7,8 @@
     ORG    $1000
 START:                  ; first instruction of program
 
-    MOVEA.L #$00005000,A1
-    MOVE.L  #$00005000,io_start
+    MOVEA.L  #$00005000,A1
+    MOVE.L  #$00005000,input_start
     *MOVE.W ,intput_end
     MOVE.W  #$4E71,(A1)+        ;NOP
     MOVE.W  #$4E75,(A1)+        ;RTS
@@ -36,7 +36,7 @@ START:                  ; first instruction of program
     MOVE.W  #$6EFA,(A1)+        ;BGT
     MOVE.W  #$6FF8,(A1)+        ;BLE
     *MOVEA.L #$00006032,A1
-    MOVE.L  #$0000503A,io_end
+    MOVE.L  #$0000503A,input_end
 
 
 *----------------------Dale Code--------------------------------
@@ -205,7 +205,7 @@ OPSETUP
     MOVEA.L io_end,A6
     *SUB.L   #$16,A6
 
-    JMP     PRIMELOOP
+    BRA     PRIMELOOP
 
 PRIMELOOP
     JSR     CHECK_PAGE_SIZE
@@ -242,7 +242,7 @@ PRIMELOOP
     CMP.B   #%11,D6         ;IF FIRST BITS 11
     BEQ     ONEONE
 
-    JMP     PRINT_DATA
+    BRA     PRINT_DATA
 
 *--------------------------------------------
 *CONFIRMS IF THE NUMBER OF LINES ALREADY ON PAGE <29
@@ -269,7 +269,7 @@ WAIT_FOR_PAGE
 
     MOVE.B  #$0,CURRPAGE
 
-    JMP     PRIMELOOP
+    BRA     PRIMELOOP
 
 *--------------------------------------------
 *MOVE & MOVEA
@@ -287,7 +287,7 @@ ZEROZERO
 *----MOVE----
     BRA     PROCESS_MOVE    ;ALL OTHERS ARE MOVE
 
-    JMP     PRINT_DATA
+    BRA     PRINT_DATA
 
 *--------------------------------------------
 *NOP, MOVEQ, MOVEM, ADDQ, LEA, NOT, BCC, JSR, & RTS
@@ -319,7 +319,7 @@ ZEROONE
     CMP.B   #%11,D6
     BEQ     PROCESS_MOVEQ   ;MOVEQ
 
-    JMP     PRINT_DATA
+    BRA     PRINT_DATA
 
 
 *--------------------------------------------
@@ -355,7 +355,7 @@ ZEROONE_SECONDARY_BRANCH
     CMP.B   #$1,D6
     BEQ     MOVEM_BUFF   ;MOVEM
 
-    JMP     PRINT_DATA
+    BRA     PRINT_DATA
 
 *--------------------------------------------
 *MOVEM BUFFER FOR CODE INTEGRATION
@@ -363,7 +363,7 @@ ZEROONE_SECONDARY_BRANCH
 MOVEM_BUFF
     JSR     MOVEMfunc
 
-    JMP     PRIMELOOP
+    BRA     PRIMELOOP
 
 *--------------------------------------------
 *SUB, & OR
@@ -382,7 +382,7 @@ ONEZERO
     CMP.B   #1,D6
     BEQ     PROCESS_SUB
 
-    JMP     PRINT_DATA
+    BRA     PRINT_DATA
 
 
 *--------------------------------------------
@@ -406,7 +406,7 @@ ONEONE
     CMP.B   #$2,D6
     BEQ     startLS ;MARTIN'S WORKING ON THIS
 
-    JMP     PRINT_DATA
+    BRA     PRINT_DATA
 
 
 *++++++++++++++++++++++++++++++++++NOP & RTS+++++++++++++++++++
@@ -419,7 +419,7 @@ PRINT_NOP
     MOVE.B  #14,D0
     TRAP    #15
 
-    JMP     PRIMELOOP
+    BRA     PRIMELOOP
 
 *--------------------------------------------
 *PROCESS OUTPUT FOR NOP
@@ -430,7 +430,7 @@ PRINT_RTS
     MOVE.B  #14,D0
     TRAP    #15
 
-    JMP     PRIMELOOP
+    BRA     PRIMELOOP
 
 *++++++++++++++++++++++++++++++++++MOVE, MOVEA, MOVEQ, MOVEM+++++++++++++++++++
 *--------------------------------------------
@@ -511,10 +511,20 @@ PRINT_MOVEA_EA
 
     BRA     PRIMELOOP
 
+CHECK_MOVE
+    MOVE.W  D7,D6
+    AND.W   #$3000,D6
+    ROL.W   #4,D6
+    
+    CMP.B   #0,D6
+    BEQ     PRINT_DATA
+    
+    RTS
 *--------------------------------------------
 *PROCESS OUTPUT FOR MOVE
 *D7 = ORIGINAL WORD OF MEMORY
 PROCESS_MOVE
+    JSR     CHECK_MOVE
 *----I/O MOVE----
     LEA     MESSAGE_MOVE,A1
     MOVE.B  #14,D0
@@ -534,7 +544,7 @@ PROCESS_MOVE
     CMP.B   #2,D6
     BEQ     PRINT_MOVE_LONG
 
-    JMP     PRINT_DATA
+    BRA     PRINT_DATA
 
 *--------------------------------------------
 *PROCESS OUTPUT FOR MOVEQ
@@ -733,13 +743,13 @@ CHECK_LEA_EA
     CMP.B   #$4,D6
     BEQ     PRINT_DATA
 
-    JMP     PROCESS_LEA_CORRECT
+    BRA     PROCESS_LEA_CORRECT
 *++++++++++++++++++++++++++++++++++JSR+++++++++++++++++++
 *--------------------------------------------
 *PROCESS OUTPUT FOR JSR
 *D7 = ORIGINAL WORD OF MEMORY
 PROCESS_JSR
-    JMP     CHECK_JSR_EA        ;CHECK THAT EA IS VALID
+    JSR     CHECK_JSR_EA        ;CHECK THAT EA IS VALID
 PROCESS_JSR_CORRECT
 *----I/O JSR----
     LEA     MESSAGE_JSR,A1
@@ -789,7 +799,7 @@ CHECK_JSR_EA_TWO
     CMP.B   #$4,D6
     BEQ     PRINT_DATA
 
-    JMP     PROCESS_JSR_CORRECT
+    BRA     PROCESS_JSR_CORRECT
 *++++++++++++++++++++++++++++++++++NOT+++++++++++++++++++
 *--------------------------------------------
 *PROCESS OUTPUT FOR NOT
@@ -856,7 +866,7 @@ PRINT_NOT_BYTE
     MOVE.W  D7,D6
     AND.W   #$003F,D6
 
-    JMP     DeAddr              ;PRINT EA
+    JSR     DeAddr              ;PRINT EA
 
 
 *----NEW LINE----
@@ -879,7 +889,7 @@ PRINT_NOT_WORD
     MOVE.W  D7,D6
     AND.W   #$003F,D6
 
-    JMP     DeAddr              ;PRINT EA
+    JSR     DeAddr              ;PRINT EA
 
 
 
@@ -903,7 +913,7 @@ PRINT_NOT_LONG
     MOVE.W  D7,D6
     AND.W   #$003F,D6
 
-    JMP     DeAddr              ;PRINT EA
+    JSR     DeAddr              ;PRINT EA
 
 
 
@@ -946,7 +956,7 @@ CHECK_AND_OR_MOVEQ_EA
 *PROCESS OUTPUT FOR OR
 *D7 = ORIGINAL WORD OF MEMORY
 PROCESS_OR
-    JMP     CHECK_AND_OR_MOVEQ_EA     ;FUNCITON CHECKS IF EA IS VALID
+    JSR     CHECK_AND_OR_MOVEQ_EA     ;FUNCITON CHECKS IF EA IS VALID
 *----I/O OR----
     LEA     MESSAGE_OR,A1
     MOVE.B  #14,D0
@@ -1094,7 +1104,7 @@ PROCESS_ADDA_LONG
 *PROCESS PRINT FOR ADD
 *D7=ORIGINAL
 PROCESS_ADD
-    JMP     CHECK_ADD_ERROR
+    JSR     CHECK_ADD_ERROR
 
 PROCESS_ADD_CLEAR
 *----I/O ADD----
@@ -1118,7 +1128,7 @@ CHECK_ADD_ERROR
     CMP.B   #$4,D6
     BGE     CHECK_ADD_EA
 
-    JMP     PROCESS_ADD_CLEAR           ;RETURN TO PROCESS_ADD
+    BRA     PROCESS_ADD_CLEAR           ;RETURN TO PROCESS_ADD
 
 *--------------------------------------------
 *IF OPMODE SHOWS ADD, LSs Dn,<ea>, CHECK DESTINATION IS VALID
@@ -1399,7 +1409,7 @@ PRINT_Dn_EA
     AND.W   #$0E00,D6
     ROL.W   #$7,D6
     MOVE.B  #3,D0
-    MOVE.B  D6,D1
+    MOVE.W  D6,D1
     TRAP    #15
 
 *----PRINT COMMA----
@@ -1727,7 +1737,7 @@ PRINT_DATA
     MOVE.B  #14,D0
     TRAP    #15
 
-    JMP     PRIMELOOP
+    BRA     PRIMELOOP
 
 
 ENDPROGRAM LEA     MESSAGE_quit,A1
@@ -1789,7 +1799,7 @@ MOVEMread      JSR DeAddr
     TRAP    #15
 
 ENDMOVEMfunc
-    JMP     PRIMELOOP
+    BRA     PRIMELOOP
 
 printMOVEM  LEA     MESSAGE_MOVEM,A1
         MOVE.B  #14,D0
@@ -1809,12 +1819,12 @@ printcomma  LEA     comma,A1
 PRINTSIZEDW  LEA     dotw,A1
         MOVE.B  #14,D0
         TRAP    #15
-        JMP     MOVEFUNCTWO
+        BRA     MOVEFUNCTWO
 
 PRINTSIZEDL  LEA     dotl,A1
         MOVE.B  #14,D0
         TRAP    #15
-        JMP     MOVEFUNCTWO
+        BRA     MOVEFUNCTWO
 *=============================================================
 * print the mesh of moveM
 FirstD
@@ -2100,7 +2110,7 @@ ENDOFLR MOVE D6,D5
     MOVE.B  #14,D0
     TRAP    #15
 
-    JMP     PRIMELOOP
+    BRA     PRIMELOOP
 *----------------------EA--------------------------------
 * Assuming address is in D1
 
@@ -2312,14 +2322,6 @@ dotl    DC.B    '.L',0
 MESSAGE_quit    DC.B    'PLEASE HIT ANY KEY quit.',CR,LF,0
 
     END    START        ; last line of source
-
-
-
-
-
-
-
-
 *~Font name~Courier New~
 *~Font size~10~
 *~Tab type~1~

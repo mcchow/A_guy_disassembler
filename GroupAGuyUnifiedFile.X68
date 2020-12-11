@@ -1,179 +1,196 @@
 *-----------------------------------------------------------
-* Title      :Group A Guy Deconstructor
-* Written by :Daniel Lorentz, Martin Chow, Dale Berg
-* Date       :12/5/20
+* Title      :
+* Written by :
+* Date       :
 * Description:
 *-----------------------------------------------------------
     ORG    $1000
 START:                  ; first instruction of program
+
 *----------------------Dale Code--------------------------------
+   LEA      starting_prompt,A1
+   MOVE.B   #14,D0
+   TRAP     #15
+   LEA      new_line,A1
+   MOVE.B   #14,D0
+   TRAP     #15
+   LEA      new_line,A1
+   MOVE.B   #14,D0
+   TRAP     #15
 
-                LEA      starting_prompt,A1
-                MOVE.B   #14,D0
-                TRAP     #15
-                LEA      new_line,A1
-                MOVE.B   #14,D0
-                TRAP     #15
-                LEA      new_line,A1
-                MOVE.B   #14,D0
-                TRAP     #15
+   ADDI.B   #$2,D3          * add two to io counter
 
-                ADDI.B   #$2,D3          * add two to io counter
+MAIN_PROCESS
+   LEA       start_address_msg,A1  * load start address prompt
 
-main_process
-                LEA       start_address_msg,A1  * load start address prompt
+   CMPI.B   #$2,D3
+   BEQ      INPUT_TO_HEX
 
-                CMPI.B   #$2,D3
-                BEQ      input_to_hex
+   CMPI.B   #$1,D3               * check if we are at first stage of io
+   BEQ      PUT_START_IN_MEMORY   * if we are, then process user input for start address
 
-                CMPI.B   #$1,D3               * check if we are at first stage of io
-                BEQ      put_start_in_memory   * if we are, then process user input for start address
+   CMPI.B   #$0,D3                * otherwise, process user input for end address
+   BEQ      PUT_END_IN_MEMORY
 
-                CMPI.B   #$0,D3                * otherwise, process user input for end address
-                BEQ      put_end_in_memory
+INPUT_TO_HEX
+   CMPI.B   #$0,D3
+   JSR      LOAD_END_ADDR * load end address message
 
+   MOVE.B   #14,D0
+   TRAP     #15
+   MOVEA.W  init_addr,A1 * store at 6000, an arbitrary memory address
 
-input_to_hex
-                CMPI.B   #$0,D3
-                JSR      load_end_addr * load end address message
+   SUB.B    #$1,D3 * remove one from io counter
 
-                MOVE.B   #14,D0
-                TRAP     #15
-                MOVEA.W  init_addr,A1 * store at 6000, an arbitrary memory address
+   MOVE.W   #2,D0 * trap 2 to read inout from keyboard
+   TRAP     #15
+   MOVE.B   #0,D0 * display the input
+   TRAP     #15
 
-                SUB.B    #$1,D3 * remove one from io counter
+   CLR.L    D6     * clear out D6 for input
+   ADD.W    D1,D6  * make copy of the size to decrement loop in memory (might not need this)
+   MOVEA.L  A1,A2  * copy the value at A1 to A2
 
-                MOVE.W   #2,D0 * trap 2 to read inout from keyboard
-                TRAP     #15
-                MOVE.B   #0,D0 * display the input
-                TRAP     #15
+   CMPI.L    #$8,D1 * ensure user input is an 8 byte address
+   BNE       UNSUPPORTED_CHARACTER * if it isn't then show invalid message and repeat process
 
-                CLR.L    D6     * clear out D6 for input
-                ADD.W    D1,D6  * make copy of the size to decrement loop in memory (might not need this)
-                MOVEA.L  A1,A2  * copy the value at A1 to A2
+   JMP       ENSURE_VALID * check if user input is allowed
 
-                CMPI.L    #$8,D1 * ensure user input is an 8 byte address
-                BNE       unsupported_character * if it isn't then show invalid message and repeat process
+UNSUPPORTED_CHARACTER
+   ADDI.B   #$1,D3          * increment io loop to go back a step
+   LEA      not_valid,A1    * load invalid input message
+   MOVE.B   #14,D0          *
+   TRAP     #15             *
+   JMP      MAIN_PROCESS    * branch back to main process to try again
 
-                JMP       ensure_valid * check if user input is allowed
+ENSURE_VALID
+   CMP.W   #$0,D6           * all elements of input have been processed
+   BEQ      MAIN_PROCESS    * if so, branch back to main
 
-unsupported_character
-                ADDI.B   #$1,D3          * increment io loop to go back a step
-                LEA      not_valid,A1    * load invalid address
-                MOVE.B   #14,D0          *
-                TRAP     #15             *
-                JMP      main_process    * branch back to main process to try again
+   CLR.L    D2              * clear out D2
+   MOVE.B   (A1),D2         * move byte A1 points to to D2
 
+   CMPI.W    #$0020,D2      * do comparisons
+   BMI.S     UNSUPPORTED_CHARACTER
 
+   CMP.B     smallest_letter,D2  * check if within bounds of smallest allowed letter
+   BGT       VERIFY_LETTER   * if so, branch to letter processing
 
-ensure_valid
-                CMP.W   #$0,D6          * all elements of input have been processed
-                BEQ      main_process    * if so, branch back to main
+   CMP.B     min_size,D2     * check if input is too small to be valid
+   BLT       UNSUPPORTED_CHARACTER        * if so, it is invalid
 
-                CLR.L    D2              * clear out D2
-                MOVE.B   (A1),D2         * move byte A1 points to to D2
+   JMP       IS_NUMERIC          * we know it's a number at this point
 
-                CMP.B     smallest_letter,D2  * check if within bounds of smallest allowed letter
-                BGT       verify_letter   * if so, branch to letter processing
+VERIFY_LETTER
+   CMP.B     invalid_sixty_six,D2
+   BGT       UNSUPPORTED_CHARACTER
 
-                CMP.B     min_size,D2     * check if input is too small to be valid
-                BLT       unsupported_character        * if so, it is invalid
+   CMP.B     invalid_sixty,D2
+   BGT       VERIFIED_LETTER_LOWERCASE
 
-                JMP       is_numeric          * otherwise it's a number
+   CMP.B     max_letter_size_uppercase,D2        * Only allow capitols, it's a letter (move this to a const)
+   BLT       VERIFIED_LETTER_UPPERCASE         * It's within bounds of upper case letter
 
-verify_letter
-                CMP.B     #$66,D2
-                BGT       unsupported_character
+   CMP.B     max_letter_size_uppercase,D2  * (move this to a const)
+   BGT       UNSUPPORTED_CHARACTER        * too big to be valid
 
-                CMP.B     #$60,D2
-                BGT       verified_letter_lowercase
+IS_NUMERIC
+   CMP.B    max_number_value,D2
+   BGT      UNSUPPORTED_CHARACTER
 
-                CMP.B     max_letter_size_uppercase,D2        * Only allow capitols, it's a letter (move this to a const)
-                BLT       verified_letter_uppercase         * It's within bounds of upper case letter
+   CMP.B    #$000,D2
+   BLT      UNSUPPORTED_CHARACTER
 
-                CMP.B     max_letter_size_uppercase,D2  * (move this to a const)
-                BGT       unsupported_character        * too big to be valid
-is_numeric
-               CMP.B    max_number_value,D2
-               BGT      unsupported_character
-               SUB.B    #$1,D6
+   SUB.B    #$1,D6
 
-               SUB.B    #$30,(A1)+
-               JMP      ensure_valid
+   SUB.B    #$30,(A1)+
+   JMP      ENSURE_VALID
 
-verified_letter_uppercase
-                SUB.B   #$37,(A1)+      * transform from ascii to hex
-                SUB.B   #$1,D6          * decrement one from size (do we need D^ for this?)
-                JMP     ensure_valid         * branch back to bounds
+VERIFIED_LETTER_UPPERCASE
+   SUB.B   #$37,(A1)+      * transform from ascii to hex
+   SUB.B   #$1,D6          * decrement one from size (do we need D^ for this?)
+   JMP     ENSURE_VALID         * branch back to bounds
 
-verified_letter_lowercase
-                SUB.B   #$57,(A1)+      * transform from ascii to hex
-                SUB.B    #$1,D6          * decrement one from size (do we need D^ for this?)
-                JMP      ensure_valid         * branch back to bounds
+VERIFIED_LETTER_LOWERCASE
+   SUB.B    #$57,(A1)+      * transform from ascii to hex
+   SUB.B    #$1,D6          * decrement one from size (do we need D^ for this?)
+   JMP      ENSURE_VALID    * branch back to bounds
 
-put_start_in_memory
-               JSR       setup_storage
-               MOVE.L    (a3),input_start * move content of A3 to input start variable
-               JMP       input_to_hex       * branch back to conversion loop
+PUT_START_IN_MEMORY
+   JSR       SETUP_STORAGE
+   MOVE.L    (a3),io_start * move content of A3 to input start variable
+   JMP       INPUT_TO_HEX  * branch back to conversion loop
 
-put_end_in_memory
-               JSR     setup_storage
-               MOVE.L   (a3),input_end  * move end address to input_end variable
-               JMP      OPSETUP * this is where we should jump to next stage
+PUT_END_IN_MEMORY
+   JSR      SETUP_STORAGE
+   MOVE.L   (a3),io_end  * move end address to io_end variable
+   JMP      OPSETUP * this is where we should jump to next stage
 
-process_input
-                CLR.L    d7
-                ADDI.B   #$4,d7
+PROCESS_INPUT
+   CLR.L    d7
+   ADDI.B   #$4,d7
 
-increment_process
-                SUB.L    #$1,d7
-                JMP      process_input_loop
-                RTS
+INCREMENT_PROCESS
+   SUB.L    #$1,d7
+   JMP      PROCESS_INPUT_LOOP
+   RTS
 
-process_input_loop
-                CMP.B    #$0,d7
-                BEQ      return_from_process
-                JSR      bit_shifting
-                JSR      increment_process
+PROCESS_INPUT_LOOP
+   CMP.B    #$0,d7
+   BEQ      RETURN_FROM_PROCESS
+   JSR      BIT_SHIFTING
+   JSR      INCREMENT_PROCESS
 
-bit_shifting
-               CLR.L    D1
-               MOVE.B   (A2)+,d1
+BIT_SHIFTING
+   CLR.L    D1
+   MOVE.B   (A2)+,d1
+   MOVE.B   D1,D4
 
-               MOVE.B   D1,D4
-               LSL.L    #4,d4
-               ADD.B    (A2)+,d4
-               MOVE.B   d4,(a4)+
-               RTS
+   ASL.L    #$04,D4
+   TST.L    D4
+   SEQ.B    D1
+   ADD.B    (A2)+,D4
+   MOVE.B   D4,(A4)+
+RTS
 
-return_from_process
-                RTS  * This is the only way to leave the process loop
+RETURN_FROM_PROCESS
+   RTS  * This is the only way to leave the process loop
 
-setup_storage
-                MOVEA.L   A2,a4           *
-                MOVEA.L   A2,a3           *
-                JSR      process_input
-                MOVE.L    (a3),d5         *
-                RTS
+SETUP_STORAGE
+   MOVEA.L   A2,a4           *
+   MOVEA.L   A2,a3           *
+   JSR      PROCESS_INPUT
+   MOVE.L    (a3),d5         *
+   RTS
 
-load_end_addr
-            LEA       end_address_msg,A1 * load the leaving message
-            RTS
+LOAD_END_ADDR
+   LEA       end_address_msg,A1 * load the leaving message
+   RTS
 
 
 OPSETUP
-    MOVEA.L input_start,A5
-    MOVEA.L input_end,A6
+    MOVEA.L io_start,A5
+    MOVEA.L io_end,A6
     *SUB.L   #$16,A6
 
-    JMP     PRIMELOOP
+    BRA     PRIMELOOP
 
 PRIMELOOP
     JSR     CHECK_PAGE_SIZE
 *----CHECK IF AT END OF MEMORY TO DECODE----
     CMPA.L  A6,A5
     BGT     ENDPROGRAM      ;WILL WRITE LATER
+    
+*---------------------print address, by Marint------
 
+    MOVE.L  A5,D1
+    MOVE.B  #15,D0
+    MOVE    #16,D2
+    TRAP    #15
+    JSR     printTAP
+
+*--------------------------------
+    
     MOVE.W  (A5)+,D7        ;MOVE NEXT WORD TO D7
 
     MOVE.W  D7,D6           ;MOVE COPY OF D7 TO D6 TO MANIP
@@ -193,7 +210,7 @@ PRIMELOOP
     CMP.B   #%11,D6         ;IF FIRST BITS 11
     BEQ     ONEONE
 
-    JMP     PRINT_DATA
+    BRA     PRINT_DATA
 
 *--------------------------------------------
 *CONFIRMS IF THE NUMBER OF LINES ALREADY ON PAGE <29
@@ -204,9 +221,9 @@ CHECK_PAGE_SIZE
     MOVE.B  CURRPAGE,D4
     CMP.B   #29,D4
     BGE     WAIT_FOR_PAGE
-    
+
     RTS
-    
+
 *--------------------------------------------
 *IF PAGE SIZE >=29, WAIT FOR KEY INPUT TO CONTINUE
 *D7 = ORIGINAL WORD OF MEMORY
@@ -214,14 +231,14 @@ WAIT_FOR_PAGE
     LEA     MESSAGE_CONTINUE,A1
     MOVE.B  #14,D0
     TRAP    #15
-    
+
     MOVE.B  #5,D0
     TRAP    #15
-    
+
     MOVE.B  #$0,CURRPAGE
-    
-    JMP     PRIMELOOP
-    
+
+    BRA     PRIMELOOP
+
 *--------------------------------------------
 *MOVE & MOVEA
 *D7 = ORIGINAL WORD OF MEMORY
@@ -238,7 +255,7 @@ ZEROZERO
 *----MOVE----
     BRA     PROCESS_MOVE    ;ALL OTHERS ARE MOVE
 
-    JMP     PRINT_DATA
+    BRA     PRINT_DATA
 
 *--------------------------------------------
 *NOP, MOVEQ, MOVEM, ADDQ, LEA, NOT, BCC, JSR, & RTS
@@ -270,7 +287,7 @@ ZEROONE
     CMP.B   #%11,D6
     BEQ     PROCESS_MOVEQ   ;MOVEQ
 
-    JMP     PRINT_DATA
+    BRA     PRINT_DATA
 
 
 *--------------------------------------------
@@ -306,15 +323,15 @@ ZEROONE_SECONDARY_BRANCH
     CMP.B   #$1,D6
     BEQ     MOVEM_BUFF   ;MOVEM
 
-    JMP     PRINT_DATA
+    BRA     PRINT_DATA
 
 *--------------------------------------------
 *MOVEM BUFFER FOR CODE INTEGRATION
 *D7 = ORIGINAL WORD OF MEMORY
 MOVEM_BUFF
     JSR     MOVEMfunc
-    
-    JMP     PRIMELOOP
+
+    BRA     PRIMELOOP
 
 *--------------------------------------------
 *SUB, & OR
@@ -333,7 +350,7 @@ ONEZERO
     CMP.B   #1,D6
     BEQ     PROCESS_SUB
 
-    JMP     PRINT_DATA
+    BRA     PRINT_DATA
 
 
 *--------------------------------------------
@@ -357,7 +374,7 @@ ONEONE
     CMP.B   #$2,D6
     BEQ     startLS ;MARTIN'S WORKING ON THIS
 
-    JMP     PRINT_DATA
+    BRA     PRINT_DATA
 
 
 *++++++++++++++++++++++++++++++++++NOP & RTS+++++++++++++++++++
@@ -370,7 +387,7 @@ PRINT_NOP
     MOVE.B  #14,D0
     TRAP    #15
 
-    JMP     PRIMELOOP
+    BRA     PRIMELOOP
 
 *--------------------------------------------
 *PROCESS OUTPUT FOR NOP
@@ -381,7 +398,7 @@ PRINT_RTS
     MOVE.B  #14,D0
     TRAP    #15
 
-    JMP     PRIMELOOP
+    BRA     PRIMELOOP
 
 *++++++++++++++++++++++++++++++++++MOVE, MOVEA, MOVEQ, MOVEM+++++++++++++++++++
 *--------------------------------------------
@@ -462,10 +479,20 @@ PRINT_MOVEA_EA
 
     BRA     PRIMELOOP
 
+CHECK_MOVE
+    MOVE.W  D7,D6
+    AND.W   #$3000,D6
+    ROL.W   #4,D6
+    
+    CMP.B   #0,D6
+    BEQ     PRINT_DATA
+    
+    RTS
 *--------------------------------------------
 *PROCESS OUTPUT FOR MOVE
 *D7 = ORIGINAL WORD OF MEMORY
 PROCESS_MOVE
+    JSR     CHECK_MOVE
 *----I/O MOVE----
     LEA     MESSAGE_MOVE,A1
     MOVE.B  #14,D0
@@ -485,7 +512,7 @@ PROCESS_MOVE
     CMP.B   #2,D6
     BEQ     PRINT_MOVE_LONG
 
-    JMP     PRINT_DATA
+    BRA     PRINT_DATA
 
 *--------------------------------------------
 *PROCESS OUTPUT FOR MOVEQ
@@ -592,8 +619,13 @@ PRINT_MOVE_EA
 
 *----PRINT DESTINATION EA----
     MOVE.W  D7,D6
-    AND.W   #$0FC0,D6
-    LSR.W   #6,D6
+    MOVE.W  D7,D5
+    AND.W   #$0E00,D6
+    LSR.W   #8,D6
+    LSR.W   #1,D6
+    AND.W   #$01C0,D5
+    LSR.W   #3,D5
+    Add    D5,D6
     JSR     DeAddr              ;PRINT EA
 
 
@@ -679,13 +711,13 @@ CHECK_LEA_EA
     CMP.B   #$4,D6
     BEQ     PRINT_DATA
 
-    JMP     PROCESS_LEA_CORRECT
+    BRA     PROCESS_LEA_CORRECT
 *++++++++++++++++++++++++++++++++++JSR+++++++++++++++++++
 *--------------------------------------------
 *PROCESS OUTPUT FOR JSR
 *D7 = ORIGINAL WORD OF MEMORY
 PROCESS_JSR
-    JMP     CHECK_JSR_EA        ;CHECK THAT EA IS VALID
+    JSR     CHECK_JSR_EA        ;CHECK THAT EA IS VALID
 PROCESS_JSR_CORRECT
 *----I/O JSR----
     LEA     MESSAGE_JSR,A1
@@ -735,7 +767,7 @@ CHECK_JSR_EA_TWO
     CMP.B   #$4,D6
     BEQ     PRINT_DATA
 
-    JMP     PROCESS_JSR_CORRECT
+    BRA     PROCESS_JSR_CORRECT
 *++++++++++++++++++++++++++++++++++NOT+++++++++++++++++++
 *--------------------------------------------
 *PROCESS OUTPUT FOR NOT
@@ -802,7 +834,7 @@ PRINT_NOT_BYTE
     MOVE.W  D7,D6
     AND.W   #$003F,D6
 
-    JMP     DeAddr              ;PRINT EA
+    JSR     DeAddr              ;PRINT EA
 
 
 *----NEW LINE----
@@ -825,7 +857,7 @@ PRINT_NOT_WORD
     MOVE.W  D7,D6
     AND.W   #$003F,D6
 
-    JMP     DeAddr              ;PRINT EA
+    JSR     DeAddr              ;PRINT EA
 
 
 
@@ -849,7 +881,7 @@ PRINT_NOT_LONG
     MOVE.W  D7,D6
     AND.W   #$003F,D6
 
-    JMP     DeAddr              ;PRINT EA
+    JSR     DeAddr              ;PRINT EA
 
 
 
@@ -892,7 +924,7 @@ CHECK_AND_OR_MOVEQ_EA
 *PROCESS OUTPUT FOR OR
 *D7 = ORIGINAL WORD OF MEMORY
 PROCESS_OR
-    JMP     CHECK_AND_OR_MOVEQ_EA     ;FUNCITON CHECKS IF EA IS VALID
+    JSR     CHECK_AND_OR_MOVEQ_EA     ;FUNCITON CHECKS IF EA IS VALID
 *----I/O OR----
     LEA     MESSAGE_OR,A1
     MOVE.B  #14,D0
@@ -1040,7 +1072,7 @@ PROCESS_ADDA_LONG
 *PROCESS PRINT FOR ADD
 *D7=ORIGINAL
 PROCESS_ADD
-    JMP     CHECK_ADD_ERROR
+    JSR     CHECK_ADD_ERROR
 
 PROCESS_ADD_CLEAR
 *----I/O ADD----
@@ -1064,7 +1096,7 @@ CHECK_ADD_ERROR
     CMP.B   #$4,D6
     BGE     CHECK_ADD_EA
 
-    JMP     PROCESS_ADD_CLEAR           ;RETURN TO PROCESS_ADD
+    BRA     PROCESS_ADD_CLEAR           ;RETURN TO PROCESS_ADD
 
 *--------------------------------------------
 *IF OPMODE SHOWS ADD, LSs Dn,<ea>, CHECK DESTINATION IS VALID
@@ -1345,7 +1377,7 @@ PRINT_Dn_EA
     AND.W   #$0E00,D6
     ROL.W   #$7,D6
     MOVE.B  #3,D0
-    MOVE.B  D6,D1
+    MOVE.W  D6,D1
     TRAP    #15
 
 *----PRINT COMMA----
@@ -1673,10 +1705,18 @@ PRINT_DATA
     MOVE.B  #14,D0
     TRAP    #15
 
-    JMP     PRIMELOOP
+    BRA     PRIMELOOP
 
 
-ENDPROGRAM
+ENDPROGRAM LEA     MESSAGE_quit,A1
+    MOVE.B  #14,D0
+    TRAP    #15
+
+    MOVE.B  #5,D0
+    TRAP    #15
+    
+    MOVE.B  #9,D0
+    TRAP    #15
 
     SIMHALT
 
@@ -1693,7 +1733,8 @@ MOVEMfunc    JSR printMOVEM
     LSR #6,D6
     CMP #0,D6
     BEQ PRINTSIZEDW
-    
+    BRA PRINTSIZEDL
+
 MOVEFUNCTWO
     JSR printTAP
 * define read or write
@@ -1703,31 +1744,37 @@ MOVEFUNCTWO
     CMP #0,D6
     BEQ MOVEMwrite
     BRA MOVEMread
-*Register to memory
-MOVEMwrite  MOVE A5,D6
-    ADD #16,A5
+*Register to memory ( mesh ,EA)
+MOVEMwrite  MOVE.W (A5)+,D6
     MOVE #0,D1
+    MOVE #0,D2
     JSR FirstD
     JSR printcomma
     JSR DeAddr
+    LEA     new_line,A1
+    MOVE.B  #14,D0
+    TRAP    #15
     BRA ENDMOVEMfunc
+*memory to Register ( EA, mesh )
 MOVEMread      JSR DeAddr
     JSR printcomma
-    MOVE A5,D6
-    ADD #16,A5
+    MOVE.W (A5)+,D6
     MOVE #0,D1
+    MOVE #0,D2
     JSR FirstD
+    LEA     new_line,A1
+    MOVE.B  #14,D0
+    TRAP    #15
 
-
-ENDMOVEMfunc    
-    JMP     PRIMELOOP
+ENDMOVEMfunc
+    BRA     PRIMELOOP
 
 printMOVEM  LEA     MESSAGE_MOVEM,A1
         MOVE.B  #14,D0
         TRAP    #15
         RTS
 
-printTAP  LEA     MESSAGE_MOVEM,A1
+printTAP  LEA    TAP,A1
         MOVE.B  #14,D0
         TRAP    #15
         RTS
@@ -1740,9 +1787,14 @@ printcomma  LEA     comma,A1
 PRINTSIZEDW  LEA     dotw,A1
         MOVE.B  #14,D0
         TRAP    #15
-        JMP     MOVEFUNCTWO
+        BRA     MOVEFUNCTWO
 
-
+PRINTSIZEDL  LEA     dotl,A1
+        MOVE.B  #14,D0
+        TRAP    #15
+        BRA     MOVEFUNCTWO
+*=============================================================
+* print the mesh of moveM
 FirstD
     CMP #8,D1
     BEQ FirstAST
@@ -1796,7 +1848,7 @@ FirstASTSL MOVE #1,D2
 * PRINT FIRST A#
 FirstAST MOVE #0,D1
 
-FirstA  CMP #8,D3
+FirstA  CMP #8,D1
     BEQ MESHEND
     MOVE D6,D5
 
@@ -1844,7 +1896,7 @@ ENDNAIN    CMP #0,D5
 NEXTAADDONE    ADD #1,D1
     BRA NEXTA
 
-MESHEND MOVE D0,D0
+MESHEND RTS
 
 *PRINT D FOR MOVEM
 PRINTDMM    LEA     D,A1
@@ -2026,11 +2078,11 @@ ENDOFLR MOVE D6,D5
     MOVE.B  #14,D0
     TRAP    #15
 
-    JMP     PRIMELOOP
+    BRA     PRIMELOOP
 *----------------------EA--------------------------------
 * Assuming address is in D1
 
-DeAddr  MOVE.L D7,D3
+DeAddr  MOVE.L D6,D3
         AND #63,D3
 * decode MODE
         MOVE    D3,D4
@@ -2138,26 +2190,23 @@ IMMEADDR    LEA     NumSign,A1
 
 
 
-EndDeAddr   MOVE D7,D1
-    RTS
+EndDeAddr   RTS
 *----------------------Dale Variables--------------------------------
+io_start     ds.l      40
+io_end       ds.l      40
 start_address_msg     dc.b      'Please enter an 8 byte hexadecimal address: ',0
 end_address_msg       dc.b      'Please enter an 8 byte hexadecimal address: ',0
 starting_prompt       dc.b      'Welcome to the program',CR,LF,0
-
 min_size        dc.b      $30
+max_number_value dc.b     $39
 smallest_letter dc.b      $40
 max_letter_size_uppercase dc.b      $47
-max_number_value dc.b     $39
+invalid_sixty_six dc.b    $66
+invalid_sixty dc.b        $60
 init_counter     dc.b     $4
-
-
-
 new_line         dc.b      '',CR,LF,0
 not_valid       dc.b      'This entry is not valid',CR,LF,0
 init_addr       dc.w      $6000
-input_start     ds.l      40
-input_end       ds.l      40
 
 CR              EQU     $0D
 LF              EQU     $0A
@@ -2237,6 +2286,8 @@ MESSAGE_MOVEM   DC.B  'MOVEM',0
 TAP DC.B    '   ',0
 
 dotw    DC.B    '.W',0
+dotl    DC.B    '.L',0
+MESSAGE_quit    DC.B    'PLEASE HIT ANY KEY quit.',CR,LF,0
 
     END    START        ; last line of source
 *~Font name~Courier New~
