@@ -1743,6 +1743,9 @@ MOVEMwrite  MOVE A5,D6
     JSR FirstD
     JSR printcomma
     JSR DeAddr
+    LEA     new_line,A1
+    MOVE.B  #14,D0
+    TRAP    #15
     BRA ENDMOVEMfunc
 MOVEMread      JSR DeAddr
     JSR printcomma
@@ -1750,7 +1753,9 @@ MOVEMread      JSR DeAddr
     ADD #16,A5
     MOVE #0,D1
     JSR FirstD
-
+    LEA     new_line,A1
+    MOVE.B  #14,D0
+    TRAP    #15
 
 ENDMOVEMfunc    
     JMP     PRIMELOOP
@@ -1760,7 +1765,7 @@ printMOVEM  LEA     MESSAGE_MOVEM,A1
         TRAP    #15
         RTS
 
-printTAP  LEA     MESSAGE_MOVEM,A1
+printTAP  LEA    TAP,A1
         MOVE.B  #14,D0
         TRAP    #15
         RTS
@@ -2272,6 +2277,7 @@ TAP DC.B    '   ',0
 dotw    DC.B    '.W',0
 
     END    START        ; last line of source
+
 *~Font name~Courier New~
 *~Font size~10~
 *~Tab type~1~
