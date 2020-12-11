@@ -7,8 +7,8 @@
     ORG    $1000
 START:                  ; first instruction of program
 
-    MOVEA.L  #$00005000,A1
-    MOVE.L  #$00005000,input_start
+    MOVEA.L #$00005000,A1
+    MOVE.L  #$00005000,io_start
     *MOVE.W ,intput_end
     MOVE.W  #$4E71,(A1)+        ;NOP
     MOVE.W  #$4E75,(A1)+        ;RTS
@@ -36,7 +36,7 @@ START:                  ; first instruction of program
     MOVE.W  #$6EFA,(A1)+        ;BGT
     MOVE.W  #$6FF8,(A1)+        ;BLE
     *MOVEA.L #$00006032,A1
-    MOVE.L  #$0000503A,input_end
+    MOVE.L  #$0000503A,io_end
 
 
 *----------------------Dale Code--------------------------------
@@ -65,7 +65,6 @@ main_process
                 CMPI.B   #$0,D3                * otherwise, process user input for end address
                 BEQ      put_end_in_memory
 
-
 input_to_hex
                 CMPI.B   #$0,D3
                 JSR      load_end_addr * load end address message
@@ -92,19 +91,20 @@ input_to_hex
 
 unsupported_character
                 ADDI.B   #$1,D3          * increment io loop to go back a step
-                LEA      not_valid,A1    * load invalid address
+                LEA      not_valid,A1    * load invalid input message
                 MOVE.B   #14,D0          *
                 TRAP     #15             *
                 JMP      main_process    * branch back to main process to try again
 
-
-
 ensure_valid
-                CMP.W   #$0,D6          * all elements of input have been processed
+                CMP.W   #$0,D6           * all elements of input have been processed
                 BEQ      main_process    * if so, branch back to main
 
                 CLR.L    D2              * clear out D2
                 MOVE.B   (A1),D2         * move byte A1 points to to D2
+
+                CMPI.W    #$0020,D2      * do comparisons
+                BMI.S     unsupported_character
 
                 CMP.B     smallest_letter,D2  * check if within bounds of smallest allowed letter
                 BGT       verify_letter   * if so, branch to letter processing
@@ -112,13 +112,13 @@ ensure_valid
                 CMP.B     min_size,D2     * check if input is too small to be valid
                 BLT       unsupported_character        * if so, it is invalid
 
-                JMP       is_numeric          * otherwise it's a number
+                JMP       is_numeric          * we know it's a number at this point
 
 verify_letter
-                CMP.B     #$66,D2
+                CMP.B     invalid_sixty_six,D2
                 BGT       unsupported_character
 
-                CMP.B     #$60,D2
+                CMP.B     invalid_sixty,D2
                 BGT       verified_letter_lowercase
 
                 CMP.B     max_letter_size_uppercase,D2        * Only allow capitols, it's a letter (move this to a const)
@@ -129,6 +129,10 @@ verify_letter
 is_numeric
                CMP.B    max_number_value,D2
                BGT      unsupported_character
+
+               CMP.B    #$000,D2
+               BLT      unsupported_character
+
                SUB.B    #$1,D6
 
                SUB.B    #$30,(A1)+
@@ -140,18 +144,18 @@ verified_letter_uppercase
                 JMP     ensure_valid         * branch back to bounds
 
 verified_letter_lowercase
-                SUB.B   #$57,(A1)+      * transform from ascii to hex
+                SUB.B    #$57,(A1)+      * transform from ascii to hex
                 SUB.B    #$1,D6          * decrement one from size (do we need D^ for this?)
-                JMP      ensure_valid         * branch back to bounds
+                JMP      ensure_valid    * branch back to bounds
 
 put_start_in_memory
                JSR       setup_storage
-               MOVE.L    (a3),input_start * move content of A3 to input start variable
+               MOVE.L    (a3),io_start * move content of A3 to input start variable
                JMP       input_to_hex       * branch back to conversion loop
 
 put_end_in_memory
-               JSR     setup_storage
-               MOVE.L   (a3),input_end  * move end address to input_end variable
+               JSR      setup_storage
+               MOVE.L   (a3),io_end  * move end address to io_end variable
                JMP      OPSETUP * this is where we should jump to next stage
 
 process_input
@@ -172,11 +176,13 @@ process_input_loop
 bit_shifting
                CLR.L    D1
                MOVE.B   (A2)+,d1
-
                MOVE.B   D1,D4
-               LSL.L    #4,d4
-               ADD.B    (A2)+,d4
-               MOVE.B   d4,(a4)+
+
+               ASL.L    #$04,D4
+               TST.L    D4
+               SEQ.B    D1
+               ADD.B    (A2)+,D4
+               MOVE.B   D4,(A4)+
                RTS
 
 return_from_process
@@ -195,8 +201,8 @@ load_end_addr
 
 
 OPSETUP
-    MOVEA.L input_start,A5
-    MOVEA.L input_end,A6
+    MOVEA.L io_start,A5
+    MOVEA.L io_end,A6
     *SUB.L   #$16,A6
 
     JMP     PRIMELOOP
@@ -237,9 +243,9 @@ CHECK_PAGE_SIZE
     MOVE.B  CURRPAGE,D4
     CMP.B   #29,D4
     BGE     WAIT_FOR_PAGE
-    
+
     RTS
-    
+
 *--------------------------------------------
 *IF PAGE SIZE >=29, WAIT FOR KEY INPUT TO CONTINUE
 *D7 = ORIGINAL WORD OF MEMORY
@@ -247,14 +253,14 @@ WAIT_FOR_PAGE
     LEA     MESSAGE_CONTINUE,A1
     MOVE.B  #14,D0
     TRAP    #15
-    
+
     MOVE.B  #5,D0
     TRAP    #15
-    
+
     MOVE.B  #$0,CURRPAGE
-    
+
     JMP     PRIMELOOP
-    
+
 *--------------------------------------------
 *MOVE & MOVEA
 *D7 = ORIGINAL WORD OF MEMORY
@@ -346,7 +352,7 @@ ZEROONE_SECONDARY_BRANCH
 *D7 = ORIGINAL WORD OF MEMORY
 MOVEM_BUFF
     JSR     MOVEMfunc
-    
+
     JMP     PRIMELOOP
 
 *--------------------------------------------
@@ -1726,7 +1732,7 @@ MOVEMfunc    JSR printMOVEM
     LSR #6,D6
     CMP #0,D6
     BEQ PRINTSIZEDW
-    
+
 MOVEFUNCTWO
     JSR printTAP
 * define read or write
@@ -1757,7 +1763,7 @@ MOVEMread      JSR DeAddr
     MOVE.B  #14,D0
     TRAP    #15
 
-ENDMOVEMfunc    
+ENDMOVEMfunc
     JMP     PRIMELOOP
 
 printMOVEM  LEA     MESSAGE_MOVEM,A1
@@ -2178,23 +2184,21 @@ IMMEADDR    LEA     NumSign,A1
 
 EndDeAddr   RTS
 *----------------------Dale Variables--------------------------------
+io_start     ds.l      40
+io_end       ds.l      40
 start_address_msg     dc.b      'Please enter an 8 byte hexadecimal address: ',0
 end_address_msg       dc.b      'Please enter an 8 byte hexadecimal address: ',0
 starting_prompt       dc.b      'Welcome to the program',CR,LF,0
-
 min_size        dc.b      $30
+max_number_value dc.b     $39
 smallest_letter dc.b      $40
 max_letter_size_uppercase dc.b      $47
-max_number_value dc.b     $39
+invalid_sixty_six dc.b    $66
+invalid_sixty dc.b        $60
 init_counter     dc.b     $4
-
-
-
 new_line         dc.b      '',CR,LF,0
 not_valid       dc.b      'This entry is not valid',CR,LF,0
 init_addr       dc.w      $6000
-input_start     ds.l      40
-input_end       ds.l      40
 
 CR              EQU     $0D
 LF              EQU     $0A
