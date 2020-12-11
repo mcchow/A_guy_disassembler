@@ -212,7 +212,17 @@ PRIMELOOP
 *----CHECK IF AT END OF MEMORY TO DECODE----
     CMPA.L  A6,A5
     BGT     ENDPROGRAM      ;WILL WRITE LATER
+    
+*---------------------print address, by Marint------
 
+    MOVE.L  A5,D1
+    MOVE.B  #15,D0
+    MOVE    #16,D2
+    TRAP    #15
+    JSR     printTAP
+
+*--------------------------------
+    
     MOVE.W  (A5)+,D7        ;MOVE NEXT WORD TO D7
 
     MOVE.W  D7,D6           ;MOVE COPY OF D7 TO D6 TO MANIP
@@ -2084,7 +2094,7 @@ ENDOFLR MOVE D6,D5
 *----------------------EA--------------------------------
 * Assuming address is in D1
 
-DeAddr  MOVE.L D7,D3
+DeAddr  MOVE.L D6,D3
         AND #63,D3
 * decode MODE
         MOVE    D3,D4
