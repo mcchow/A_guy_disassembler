@@ -7,8 +7,8 @@
     ORG    $1000
 START:                  ; first instruction of program
 
-    MOVEA.L #$00005000,A1
-    MOVE.L  #$00005000,io_start
+    MOVEA.L  #$00005000,A1
+    MOVE.L  #$00005000,input_start
     *MOVE.W ,intput_end
     MOVE.W  #$4E71,(A1)+        ;NOP
     MOVE.W  #$4E75,(A1)+        ;RTS
@@ -36,7 +36,7 @@ START:                  ; first instruction of program
     MOVE.W  #$6EFA,(A1)+        ;BGT
     MOVE.W  #$6FF8,(A1)+        ;BLE
     *MOVEA.L #$00006032,A1
-    MOVE.L  #$0000503A,io_end
+    MOVE.L  #$0000503A,input_end
 
 
 *----------------------Dale Code--------------------------------
@@ -515,6 +515,7 @@ PRINT_MOVEA_EA
 *PROCESS OUTPUT FOR MOVE
 *D7 = ORIGINAL WORD OF MEMORY
 PROCESS_MOVE
+    JSR     CHECK_MOVE
 *----I/O MOVE----
     LEA     MESSAGE_MOVE,A1
     MOVE.B  #14,D0
@@ -536,6 +537,15 @@ PROCESS_MOVE
 
     JMP     PRINT_DATA
 
+CHECK_MOVE
+    MOVE.W  D7,D6
+    AND.W   #$3000,D6
+    ROL.W   #4,D6
+    CMP.B   #0,D6
+    BEQ     PRINT_DATA
+    
+    RTS
+    
 *--------------------------------------------
 *PROCESS OUTPUT FOR MOVEQ
 *D7 = ORIGINAL WORD OF MEMORY
@@ -946,7 +956,7 @@ CHECK_AND_OR_MOVEQ_EA
 *PROCESS OUTPUT FOR OR
 *D7 = ORIGINAL WORD OF MEMORY
 PROCESS_OR
-    JMP     CHECK_AND_OR_MOVEQ_EA     ;FUNCITON CHECKS IF EA IS VALID
+    JSR     CHECK_AND_OR_MOVEQ_EA     ;FUNCITON CHECKS IF EA IS VALID
 *----I/O OR----
     LEA     MESSAGE_OR,A1
     MOVE.B  #14,D0
@@ -2301,13 +2311,6 @@ dotw    DC.B    '.W',0
 dotl    DC.B    '.L',0
 
     END    START        ; last line of source
-
-
-
-
-
-
-
 *~Font name~Courier New~
 *~Font size~10~
 *~Tab type~1~
