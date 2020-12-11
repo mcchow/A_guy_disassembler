@@ -1737,8 +1737,7 @@ MOVEFUNCTWO
     BEQ MOVEMwrite
     BRA MOVEMread
 *Register to memory
-MOVEMwrite  MOVE A5,D6
-    ADD #16,A5
+MOVEMwrite  MOVE (A5)+,D6
     MOVE #0,D1
     JSR FirstD
     JSR printcomma
@@ -1749,8 +1748,7 @@ MOVEMwrite  MOVE A5,D6
     BRA ENDMOVEMfunc
 MOVEMread      JSR DeAddr
     JSR printcomma
-    MOVE A5,D6
-    ADD #16,A5
+    MOVE (A5)+,D6
     MOVE #0,D1
     JSR FirstD
     LEA     new_line,A1
@@ -2176,8 +2174,7 @@ IMMEADDR    LEA     NumSign,A1
 
 
 
-EndDeAddr   MOVE D7,D1
-    RTS
+EndDeAddr   RTS
 *----------------------Dale Variables--------------------------------
 start_address_msg     dc.b      'Please enter an 8 byte hexadecimal address: ',0
 end_address_msg       dc.b      'Please enter an 8 byte hexadecimal address: ',0
@@ -2277,6 +2274,7 @@ TAP DC.B    '   ',0
 dotw    DC.B    '.W',0
 
     END    START        ; last line of source
+
 
 *~Font name~Courier New~
 *~Font size~10~
