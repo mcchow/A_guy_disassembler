@@ -631,8 +631,13 @@ PRINT_MOVE_EA
 
 *----PRINT DESTINATION EA----
     MOVE.W  D7,D6
-    AND.W   #$0FC0,D6
-    LSR.W   #6,D6
+    MOVE.W  D7,D5
+    AND.W   #$0E00,D6
+    LSR.W   #8,D6
+    LSR.W   #1,D6
+    AND.W   #$01C0,D5
+    LSR.W   #3,D5
+    Add    D5,D6
     JSR     DeAddr              ;PRINT EA
 
 
@@ -2286,6 +2291,8 @@ dotw    DC.B    '.W',0
 dotl    DC.B    '.L',0
 
     END    START        ; last line of source
+
+
 
 
 
