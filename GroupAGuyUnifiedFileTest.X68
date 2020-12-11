@@ -7,8 +7,8 @@
     ORG    $1000
 START:                  ; first instruction of program
 
-    MOVEA.L  #$00006000,A1
-    MOVE.L  #$00006000,input_start
+    MOVEA.L  #$00005000,A1
+    MOVE.L  #$00005000,input_start
     *MOVE.W ,intput_end
     MOVE.W  #$4E71,(A1)+        ;NOP
     MOVE.W  #$4E75,(A1)+        ;RTS
@@ -19,7 +19,7 @@ START:                  ; first instruction of program
     MOVE.W  #$1200,(A1)+        ;MOVE
     MOVE.L  #$327C0500,(A1)+        ;MOVEA
     MOVE.W  #$7E49,(A1)+        ;MOVEQ
-    *MOVE.L  #$48910001,(A1)+        ;MOVEM
+    MOVE.L  #$48910001,(A1)+        ;MOVEM
     MOVE.L  #$60000036,(A1)+        ;BRA
     MOVE.L  #$C47C0001,(A1)+        ;AND
     MOVE.W  #$ED00,(A1)+        ;ASL
@@ -36,7 +36,7 @@ START:                  ; first instruction of program
     MOVE.W  #$6EFA,(A1)+        ;BGT
     MOVE.W  #$6FF8,(A1)+        ;BLE
     *MOVEA.L #$00006032,A1
-    MOVE.L  #$0000603A,input_end
+    MOVE.L  #$0000503A,input_end
 
 
 *----------------------Dale Code--------------------------------
@@ -202,6 +202,7 @@ OPSETUP
     JMP     PRIMELOOP
 
 PRIMELOOP
+    JSR     CHECK_PAGE_SIZE
 *----CHECK IF AT END OF MEMORY TO DECODE----
     CMPA.L  A6,A5
     BGT     ENDPROGRAM      ;WILL WRITE LATER
@@ -227,6 +228,33 @@ PRIMELOOP
 
     JMP     PRINT_DATA
 
+*--------------------------------------------
+*CONFIRMS IF THE NUMBER OF LINES ALREADY ON PAGE <29
+*IF >=30, WAIT FOR KEY INPUT TO CONTINUE
+*D7 = ORIGINAL WORD OF MEMORY
+CHECK_PAGE_SIZE
+    ADD.B   #1,CURRPAGE
+    MOVE.B  CURRPAGE,D4
+    CMP.B   #29,D4
+    BGE     WAIT_FOR_PAGE
+    
+    RTS
+    
+*--------------------------------------------
+*IF PAGE SIZE >=29, WAIT FOR KEY INPUT TO CONTINUE
+*D7 = ORIGINAL WORD OF MEMORY
+WAIT_FOR_PAGE
+    LEA     MESSAGE_CONTINUE,A1
+    MOVE.B  #14,D0
+    TRAP    #15
+    
+    MOVE.B  #5,D0
+    TRAP    #15
+    
+    MOVE.B  #$0,CURRPAGE
+    
+    JMP     PRIMELOOP
+    
 *--------------------------------------------
 *MOVE & MOVEA
 *D7 = ORIGINAL WORD OF MEMORY
@@ -309,10 +337,17 @@ ZEROONE_SECONDARY_BRANCH
     AND.W   #$0380,D6    ;CLEAR ALL BUT BITS 9-7
     LSR.W   #7,D6       ;MOVE BITS 9-7 TO 2-0
     CMP.B   #$1,D6
-    BEQ     MOVEMfunc   ;MOVEM
+    BEQ     MOVEM_BUFF   ;MOVEM
 
     JMP     PRINT_DATA
 
+*--------------------------------------------
+*MOVEM BUFFER FOR CODE INTEGRATION
+*D7 = ORIGINAL WORD OF MEMORY
+MOVEM_BUFF
+    JSR     MOVEMfunc
+    
+    JMP     PRIMELOOP
 
 *--------------------------------------------
 *SUB, & OR
@@ -636,7 +671,7 @@ PROCESS_LEA_CORRECT
     MOVE.B  #14,D0
     TRAP    #15
 
-    MOVE.B  D6,D1
+    MOVE.L  D6,D1
     MOVE.B  #3,D0
     TRAP    #15
 
@@ -1691,6 +1726,8 @@ MOVEMfunc    JSR printMOVEM
     LSR #6,D6
     CMP #0,D6
     BEQ PRINTSIZEDW
+    
+MOVEFUNCTWO
     JSR printTAP
 * define read or write
     MOVE D7,D6
@@ -1715,7 +1752,8 @@ MOVEMread      JSR DeAddr
     JSR FirstD
 
 
-ENDMOVEMfunc    RTS
+ENDMOVEMfunc    
+    JMP     PRIMELOOP
 
 printMOVEM  LEA     MESSAGE_MOVEM,A1
         MOVE.B  #14,D0
@@ -1735,7 +1773,7 @@ printcomma  LEA     comma,A1
 PRINTSIZEDW  LEA     dotw,A1
         MOVE.B  #14,D0
         TRAP    #15
-        RTS
+        JMP     MOVEFUNCTWO
 
 
 FirstD
@@ -2200,6 +2238,9 @@ MESSAGE_ADDRESS     DC.B    'A',0
 MESSAGE_COMMA       DC.B    ',',0
 MESSAGE_DATA        DC.B    'DATA:     ',0
 
+CURRPAGE            EQU     $0
+MESSAGE_CONTINUE    DC.B    'PLEASE HIT ANY KEY TO CONTINUE.',CR,LF,0
+
 *----------------------Martin Variables--------------------------------
 D DC.B    'D',0
 A DC.B    'A',0
@@ -2231,7 +2272,6 @@ TAP DC.B    '   ',0
 dotw    DC.B    '.W',0
 
     END    START        ; last line of source
-
 *~Font name~Courier New~
 *~Font size~10~
 *~Tab type~1~
