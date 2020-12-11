@@ -1737,8 +1737,9 @@ MOVEFUNCTWO
     BEQ MOVEMwrite
     BRA MOVEMread
 *Register to memory
-MOVEMwrite  MOVE.L (A5)+,D6
+MOVEMwrite  MOVE.W (A5)+,D6
     MOVE #0,D1
+    MOVE #0,D2
     JSR FirstD
     JSR printcomma
     JSR DeAddr
@@ -1748,8 +1749,9 @@ MOVEMwrite  MOVE.L (A5)+,D6
     BRA ENDMOVEMfunc
 MOVEMread      JSR DeAddr
     JSR printcomma
-    MOVE.L (A5)+,D6
+    MOVE.W (A5)+,D6
     MOVE #0,D1
+    MOVE #0,D2
     JSR FirstD
     LEA     new_line,A1
     MOVE.B  #14,D0
@@ -2274,6 +2276,7 @@ TAP DC.B    '   ',0
 dotw    DC.B    '.W',0
 
     END    START        ; last line of source
+
 
 
 
