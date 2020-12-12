@@ -1746,21 +1746,25 @@ MOVEFUNCTWO
     BRA MOVEMread
 *Register to memory ( mesh ,EA)
 MOVEMwrite  MOVE.W (A5)+,D6
-    MOVE #0,D1
-    MOVE #0,D2
+    MOVE.L #0,D1
+    MOVE.L #0,D2
     JSR FirstD
     JSR printcomma
+    MOVE D7,D6
     JSR DeAddr
     LEA     new_line,A1
     MOVE.B  #14,D0
     TRAP    #15
     BRA ENDMOVEMfunc
 *memory to Register ( EA, mesh )
-MOVEMread      JSR DeAddr
+MOVEMread
+    MOVE.W (A5)+,MASH
+    MOVE D7,D6
+    JSR DeAddr
     JSR printcomma
-    MOVE.W (A5)+,D6
-    MOVE #0,D1
-    MOVE #0,D2
+    MOVE.W  MASH,D6
+    MOVE.L #0,D1
+    MOVE.L #0,D2
     JSR FirstD
     LEA     new_line,A1
     MOVE.B  #14,D0
@@ -2288,8 +2292,10 @@ TAP DC.B    '   ',0
 dotw    DC.B    '.W',0
 dotl    DC.B    '.L',0
 MESSAGE_quit    DC.B    'PLEASE HIT ANY KEY quit.',CR,LF,0
+MASH    DC.L    $0
 
     END    START        ; last line of source
+
 
 *~Font name~Courier New~
 *~Font size~10~
