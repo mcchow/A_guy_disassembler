@@ -2162,9 +2162,9 @@ DIRADDRN LEA     NegSign,A1
 *TEMPADDR # OR L OR W
 TEMPADDR    AND #7,D3
     CMP #0,D3
-    BRA WORDADDR
+    BEQ WORDADDR
     CMP #1,D3
-    BRA LONGADDR
+    BEQ LONGADDR
     CMP #4,D3
     BRA IMMEADDR
     BRA EndDeAddr
@@ -2290,6 +2290,7 @@ dotl    DC.B    '.L',0
 MESSAGE_quit    DC.B    'PLEASE HIT ANY KEY quit.',CR,LF,0
 
     END    START        ; last line of source
+
 *~Font name~Courier New~
 *~Font size~10~
 *~Tab type~1~
